@@ -5,10 +5,11 @@
 
 The purpose of this plugin is to restrict extra attempts on Quiz after the user reach a passing grade.
 
-Based on the [Reattempt Checker - a quiz access rule](https://moodle.org/plugins/quizaccess_reattemptchecker), the main goal is:
+Based on the [Reattempt Checker - a quiz access rule](https://moodle.org/plugins/quizaccess_reattemptchecker) and [Pass grade quiz access rule](https://moodle.org/plugins/quizaccess_passgrade), the main goal is:
 
  - update to support newer versions of Moodle
  - simplify the structure and use the already existing field "grade to pass"
+ - add tests
 
 ### Attention
 The plugin does not currently support "Average" as the grade method.

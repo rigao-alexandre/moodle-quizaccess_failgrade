@@ -36,20 +36,12 @@ require_once($CFG->dirroot . '/mod/quiz/accessrule/failgrade/rule.php');
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class quizaccess_failgrade_testcase extends advanced_testcase {
-
-    // define('QUIZ_GRADEHIGHEST', '1');
-    // define('QUIZ_GRADEAVERAGE', '2');
-    // define('QUIZ_ATTEMPTFIRST', '3');
-    // define('QUIZ_ATTEMPTLAST',  '4');
-
     public function test_setting() {
-        global $CFG, $DB;
+        global $CFG;
 
         $this->resetAfterTest();
 
-        /**
-         * SETUP
-         */
+        // Setup.
         $CFG->enablecompletion = true;
         $CFG->enableavailability = true;
         $generator = $this->getDataGenerator();
@@ -68,28 +60,7 @@ class quizaccess_failgrade_testcase extends advanced_testcase {
 
         $quizgenerator = $generator->get_plugin_generator('mod_quiz');
 
-        /**
-         * TEMPLATE
-         */
-
-        // $quiz = $quizgenerator->create_instance([
-        //         'course' => $course->id,
-        //         'questionsperpage' => 0,
-        //         'grade' => 10.0,
-        //         'sumgrades' => 1,
-        //         'attempts' => 5,
-        //         'name' => 'Quiz!',
-        //         'grademethod' => '1',
-        //         'failgradeenabled' => 0,
-        // ]);
-
-        /**
-         * /TEMPLATE
-         */
-
-        // $rule = new quizaccess_failgrade($quizobj, 0);
-
-        // Test 1
+        // Test 1.
         $quiz = $quizgenerator->create_instance([
                 'course' => $course->id,
                 'questionsperpage' => 0,
@@ -105,7 +76,7 @@ class quizaccess_failgrade_testcase extends advanced_testcase {
         $rule = quizaccess_failgrade::make($quizobj, 0, false);
         $this->assertNull($rule);
 
-        // Test 2
+        // Test 2.
         $quiz = $quizgenerator->create_instance([
             'course' => $course->id,
             'questionsperpage' => 0,
@@ -123,13 +94,11 @@ class quizaccess_failgrade_testcase extends advanced_testcase {
     }
 
     public function test_gradehighest() {
-        global $CFG, $DB;
+        global $CFG;
 
         $this->resetAfterTest();
 
-        /**
-         * SETUP
-         */
+        // Setup.
         $CFG->enablecompletion = true;
         $CFG->enableavailability = true;
         $generator = $this->getDataGenerator();
@@ -211,13 +180,11 @@ class quizaccess_failgrade_testcase extends advanced_testcase {
     }
 
     public function test_attemptfirst() {
-        global $CFG, $DB;
+        global $CFG;
 
         $this->resetAfterTest();
 
-        /**
-         * SETUP
-         */
+        // Setup.
         $CFG->enablecompletion = true;
         $CFG->enableavailability = true;
         $generator = $this->getDataGenerator();
@@ -236,9 +203,7 @@ class quizaccess_failgrade_testcase extends advanced_testcase {
 
         $quizgenerator = $generator->get_plugin_generator('mod_quiz');
 
-        /**
-         * FAIL
-         */
+        // Fail.
         $quiz = $quizgenerator->create_instance([
             'course' => $course->id,
             'questionsperpage' => 0,
@@ -300,10 +265,7 @@ class quizaccess_failgrade_testcase extends advanced_testcase {
         $this->assertFalse($rule->is_finished(1, $attempt));
         $this->assertEmpty($rule->prevent_new_attempt(1, $attempt));
 
-        /**
-         * PASS
-         */
-
+        // Pass.
         $quiz = $quizgenerator->create_instance([
             'course' => $course->id,
             'questionsperpage' => 0,
@@ -352,13 +314,11 @@ class quizaccess_failgrade_testcase extends advanced_testcase {
     }
 
     public function test_attemptlast() {
-        global $CFG, $DB;
+        global $CFG;
 
         $this->resetAfterTest();
 
-        /**
-         * SETUP
-         */
+        // Setup.
         $CFG->enablecompletion = true;
         $CFG->enableavailability = true;
         $generator = $this->getDataGenerator();
@@ -377,9 +337,8 @@ class quizaccess_failgrade_testcase extends advanced_testcase {
 
         $quizgenerator = $generator->get_plugin_generator('mod_quiz');
 
-        /**
-         * FAIL then PASS
-         */
+        // Fail then Pass.
+
         $quiz = $quizgenerator->create_instance([
             'course' => $course->id,
             'questionsperpage' => 0,

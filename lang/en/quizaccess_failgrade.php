@@ -29,7 +29,7 @@ $string['pluginname'] = 'Fail grade';
 $string['privacy:metadata'] = 'The Fail grade plugin does not store any personal data.';
 
 $string['failgradeenabled'] = 'Block extra attempts if passing grade';
-$string['failgradeenabled_help'] = 'If enabled, a student must not have a psssing grade to attempt the quiz more times.';
+$string['failgradeenabled_help'] = 'Prevent user from attempting the quiz again once they have received a passing grade.';
 
-$string['failgradedescription'] = 'Attempts avaliables till reaching passing grade.';
+$string['failgradedescription'] = 'Attempts available until reaching passing grade.';
 $string['preventmoreattempts'] = 'You have already passed this quiz, and may not make further attempts.';

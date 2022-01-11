@@ -89,6 +89,10 @@ class quizaccess_failgrade extends quiz_access_rule_base {
      * attempt at this quiz.
      */
     public function is_finished($numprevattempts, $lastattempt) {
+        if ($numprevattempts === 0) {
+            return false;
+        }
+
         $item = grade_item::fetch([
             'courseid' => $this->quiz->course,
             'itemtype' => 'mod',

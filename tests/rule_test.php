@@ -91,6 +91,8 @@ class quizaccess_failgrade_testcase extends advanced_testcase {
 
         $rule = quizaccess_failgrade::make($quizobj, 0, false);
         $this->assertInstanceOf('quizaccess_failgrade', $rule);
+        $this->assertFalse($rule->is_finished(0, null));
+        $this->assertEmpty($rule->prevent_new_attempt(0, null));
     }
 
     public function test_grade_highest() {
@@ -157,12 +159,10 @@ class quizaccess_failgrade_testcase extends advanced_testcase {
         quiz_attempt_save_started($quizobj, $quba, $attempt);
         $attemptobj = quiz_attempt::create($attempt->id);
         $attemptobj->process_submitted_actions($timenow, false, [1 => ['answer' => '3.14']]);
-        $attemptobj = quiz_attempt::create($attempt->id);
         $attemptobj->process_finish($timenow, false);
-        $attemptobj = quiz_attempt::create($attempt->id);
 
-        $this->assertFalse($rule->is_finished(0, $attempt));
-        $this->assertEmpty($rule->prevent_new_attempt(0, $attempt));
+        $this->assertFalse($rule->is_finished(1, $attempt));
+        $this->assertEmpty($rule->prevent_new_attempt(1, $attempt));
 
         // Pass
         $quba = question_engine::make_questions_usage_by_activity('mod_quiz', $quizobj->get_context());
@@ -173,28 +173,24 @@ class quizaccess_failgrade_testcase extends advanced_testcase {
         quiz_attempt_save_started($quizobj, $quba, $attempt);
         $attemptobj = quiz_attempt::create($attempt->id);
         $attemptobj->process_submitted_actions($timenow, false, [1 => ['answer' => '3.14'], 2 => ['answer' => '3.14']]);
-        $attemptobj = quiz_attempt::create($attempt->id);
         $attemptobj->process_finish($timenow, false);
-        $attemptobj = quiz_attempt::create($attempt->id);
 
-        $this->assertTrue($rule->is_finished(1, $attempt));
-        $this->assertNotEmpty($rule->prevent_new_attempt(1, $attempt));
+        $this->assertTrue($rule->is_finished(2, $attempt));
+        $this->assertNotEmpty($rule->prevent_new_attempt(2, $attempt));
 
         // Fail
         $quba = question_engine::make_questions_usage_by_activity('mod_quiz', $quizobj->get_context());
         $quba->set_preferred_behaviour($quizobj->get_quiz()->preferredbehaviour);
         $timenow = time();
-        $attempt = quiz_create_attempt($quizobj, 1, false, $timenow, false, $user->id);
-        quiz_start_new_attempt($quizobj, $quba, $attempt, 1, $timenow);
+        $attempt = quiz_create_attempt($quizobj, 3, false, $timenow, false, $user->id);
+        quiz_start_new_attempt($quizobj, $quba, $attempt, 3, $timenow);
         quiz_attempt_save_started($quizobj, $quba, $attempt);
         $attemptobj = quiz_attempt::create($attempt->id);
         $attemptobj->process_submitted_actions($timenow, false, [1 => ['answer' => '3.14']]);
-        $attemptobj = quiz_attempt::create($attempt->id);
         $attemptobj->process_finish($timenow, false);
-        $attemptobj = quiz_attempt::create($attempt->id);
 
-        $this->assertTrue($rule->is_finished(2, $attempt));
-        $this->assertNotEmpty($rule->prevent_new_attempt(2, $attempt));
+        $this->assertTrue($rule->is_finished(3, $attempt));
+        $this->assertNotEmpty($rule->prevent_new_attempt(3, $attempt));
     }
 
     public function test_grade_firstattempt() {
@@ -261,12 +257,10 @@ class quizaccess_failgrade_testcase extends advanced_testcase {
         quiz_attempt_save_started($quizobj, $quba, $attempt);
         $attemptobj = quiz_attempt::create($attempt->id);
         $attemptobj->process_submitted_actions($timenow, false, [1 => ['answer' => '3.14']]);
-        $attemptobj = quiz_attempt::create($attempt->id);
         $attemptobj->process_finish($timenow, false);
-        $attemptobj = quiz_attempt::create($attempt->id);
 
-        $this->assertFalse($rule->is_finished(0, $attempt));
-        $this->assertEmpty($rule->prevent_new_attempt(0, $attempt));
+        $this->assertFalse($rule->is_finished(1, $attempt));
+        $this->assertEmpty($rule->prevent_new_attempt(1, $attempt));
 
         $quba = question_engine::make_questions_usage_by_activity('mod_quiz', $quizobj->get_context());
         $quba->set_preferred_behaviour($quizobj->get_quiz()->preferredbehaviour);
@@ -276,12 +270,10 @@ class quizaccess_failgrade_testcase extends advanced_testcase {
         quiz_attempt_save_started($quizobj, $quba, $attempt);
         $attemptobj = quiz_attempt::create($attempt->id);
         $attemptobj->process_submitted_actions($timenow, false, [1 => ['answer' => '3.14'], 2 => ['answer' => '3.14']]);
-        $attemptobj = quiz_attempt::create($attempt->id);
         $attemptobj->process_finish($timenow, false);
-        $attemptobj = quiz_attempt::create($attempt->id);
 
-        $this->assertFalse($rule->is_finished(1, $attempt));
-        $this->assertEmpty($rule->prevent_new_attempt(1, $attempt));
+        $this->assertFalse($rule->is_finished(2, $attempt));
+        $this->assertEmpty($rule->prevent_new_attempt(2, $attempt));
 
         // Pass.
         $quiz = $quizgenerator->create_instance([
@@ -323,12 +315,10 @@ class quizaccess_failgrade_testcase extends advanced_testcase {
         quiz_attempt_save_started($quizobj, $quba, $attempt);
         $attemptobj = quiz_attempt::create($attempt->id);
         $attemptobj->process_submitted_actions($timenow, false, [1 => ['answer' => '3.14'], 2 => ['answer' => '3.14']]);
-        $attemptobj = quiz_attempt::create($attempt->id);
         $attemptobj->process_finish($timenow, false);
-        $attemptobj = quiz_attempt::create($attempt->id);
 
-        $this->assertTrue($rule->is_finished(0, $attempt));
-        $this->assertNotEmpty($rule->prevent_new_attempt(0, $attempt));
+        $this->assertTrue($rule->is_finished(1, $attempt));
+        $this->assertNotEmpty($rule->prevent_new_attempt(1, $attempt));
     }
 
     public function test_grade_lastattempt() {
@@ -396,12 +386,10 @@ class quizaccess_failgrade_testcase extends advanced_testcase {
         quiz_attempt_save_started($quizobj, $quba, $attempt);
         $attemptobj = quiz_attempt::create($attempt->id);
         $attemptobj->process_submitted_actions($timenow, false, [1 => ['answer' => '3.14']]);
-        $attemptobj = quiz_attempt::create($attempt->id);
         $attemptobj->process_finish($timenow, false);
-        $attemptobj = quiz_attempt::create($attempt->id);
 
-        $this->assertFalse($rule->is_finished(0, $attempt));
-        $this->assertEmpty($rule->prevent_new_attempt(0, $attempt));
+        $this->assertFalse($rule->is_finished(1, $attempt));
+        $this->assertEmpty($rule->prevent_new_attempt(1, $attempt));
 
         $quba = question_engine::make_questions_usage_by_activity('mod_quiz', $quizobj->get_context());
         $quba->set_preferred_behaviour($quizobj->get_quiz()->preferredbehaviour);
@@ -411,12 +399,10 @@ class quizaccess_failgrade_testcase extends advanced_testcase {
         quiz_attempt_save_started($quizobj, $quba, $attempt);
         $attemptobj = quiz_attempt::create($attempt->id);
         $attemptobj->process_submitted_actions($timenow, false, [1 => ['answer' => '3.14'], 2 => ['answer' => '3.14']]);
-        $attemptobj = quiz_attempt::create($attempt->id);
         $attemptobj->process_finish($timenow, false);
-        $attemptobj = quiz_attempt::create($attempt->id);
 
-        $this->assertTrue($rule->is_finished(1, $attempt));
-        $this->assertNotEmpty($rule->prevent_new_attempt(1, $attempt));
+        $this->assertTrue($rule->is_finished(2, $attempt));
+        $this->assertNotEmpty($rule->prevent_new_attempt(2, $attempt));
     }
 
     public function test_grade_average() {
@@ -482,12 +468,10 @@ class quizaccess_failgrade_testcase extends advanced_testcase {
         quiz_attempt_save_started($quizobj, $quba, $attempt);
         $attemptobj = quiz_attempt::create($attempt->id);
         $attemptobj->process_submitted_actions($timenow, false, [1 => ['answer' => '3.14']]);
-        $attemptobj = quiz_attempt::create($attempt->id);
         $attemptobj->process_finish($timenow, false);
-        $attemptobj = quiz_attempt::create($attempt->id);
 
-        $this->assertFalse($rule->is_finished(0, $attempt));
-        $this->assertEmpty($rule->prevent_new_attempt(0, $attempt));
+        $this->assertFalse($rule->is_finished(1, $attempt));
+        $this->assertEmpty($rule->prevent_new_attempt(1, $attempt));
 
         $quba = question_engine::make_questions_usage_by_activity('mod_quiz', $quizobj->get_context());
         $quba->set_preferred_behaviour($quizobj->get_quiz()->preferredbehaviour);
@@ -497,11 +481,9 @@ class quizaccess_failgrade_testcase extends advanced_testcase {
         quiz_attempt_save_started($quizobj, $quba, $attempt);
         $attemptobj = quiz_attempt::create($attempt->id);
         $attemptobj->process_submitted_actions($timenow, false, [1 => ['answer' => '3.14'], 2 => ['answer' => '3.14']]);
-        $attemptobj = quiz_attempt::create($attempt->id);
         $attemptobj->process_finish($timenow, false);
-        $attemptobj = quiz_attempt::create($attempt->id);
 
-        $this->assertTrue($rule->is_finished(1, $attempt));
-        $this->assertNotEmpty($rule->prevent_new_attempt(1, $attempt));
+        $this->assertTrue($rule->is_finished(2, $attempt));
+        $this->assertNotEmpty($rule->prevent_new_attempt(2, $attempt));
     }
 }

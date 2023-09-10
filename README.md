@@ -11,9 +11,6 @@ Based on the [Reattempt Checker - a quiz access rule](https://moodle.org/plugins
  - simplify the structure and use the already existing field "grade to pass"
  - add tests
 
-### Attention
-The plugin does not currently support "Average" as the grade method.
-
 # Instalation
 
 Please refer to the official documentation: [Installing Plugins](https://docs.moodle.org/en/Installing_plugins)
@@ -26,7 +23,7 @@ Please refer to the official documentation: [Installing Plugins](https://docs.mo
 
 - [X] Publish plugin on GitHub
 
-- [ ] Submit to [Moodle Plugins directory](https://moodle.org/plugins/)
+- [X] Submit to [Moodle Plugins directory](https://moodle.org/plugins/)
 
 - [X] GDPR
 
@@ -35,8 +32,6 @@ Please refer to the official documentation: [Installing Plugins](https://docs.mo
 - [ ] Behat tests
 
 - [ ] Translate to other languages
-
-- [ ] Figure a way to support Quiz with "Average" as the grade method
 
 # Development
 

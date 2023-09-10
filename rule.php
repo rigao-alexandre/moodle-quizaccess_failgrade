@@ -104,8 +104,10 @@ class quizaccess_failgrade extends quiz_access_rule_base {
         if ($item) {
             $grades = grade_grade::fetch_users_grades($item, [$lastattempt->userid], false);
 
-            if (!empty($grades[$lastattempt->userid])) {
-                return $grades[$lastattempt->userid]->is_passed($item);
+            $grade = $grades[$lastattempt->userid];
+
+            if (!empty($grade)) {
+                return $grade->is_passed($item);
             }
         }
 
@@ -124,8 +126,6 @@ class quizaccess_failgrade extends quiz_access_rule_base {
 
         $mform->addElement('selectyesno', 'failgradeenabled', get_string('failgradeenabled', 'quizaccess_failgrade'));
 
-        $mform->disabledIf('failgradeenabled', 'grademethod', 'eq', QUIZ_GRADEAVERAGE);
-
         $mform->addHelpButton('failgradeenabled', 'failgradeenabled', 'quizaccess_failgrade');
     }
 
@@ -138,7 +138,7 @@ class quizaccess_failgrade extends quiz_access_rule_base {
     public static function save_settings($quiz) {
         global $DB;
 
-        if (empty($quiz->failgradeenabled) || QUIZ_GRADEAVERAGE == $quiz->grademethod) {
+        if (empty($quiz->failgradeenabled)) {
             $DB->delete_records('quizaccess_failgrade', ['quizid' => $quiz->id]);
         } else {
             if (!$DB->record_exists('quizaccess_failgrade', ['quizid' => $quiz->id])) {

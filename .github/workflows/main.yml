@@ -1,92 +1,57 @@
-name: Core
+name: Moodle Plugin CI
 
-on:
-  push:
-    branches-ignore:
-      - master
-      - MOODLE_[0-9]+_STABLE
-    tags-ignore:
-      - v[0-9]+.[0-9]+.[0-9]+*
-
-env:
-  php: 8.0
+on: [push, pull_request]
 
 jobs:
-  Grunt:
-    runs-on: ubuntu-18.04
+  test:
+    runs-on: ubuntu-latest
 
-    steps:
-      - name: Checking out code
-        uses: actions/checkout@v2
-
-      - name: Configuring node & npm
-        uses: actions/setup-node@v2
-        with:
-          node-version-file: '.nvmrc'
-
-      - name: Installing node stuff
-        run: npm install
-
-      - name: Running grunt
-        run: npx grunt
-
-      - name: Looking for uncommitted changes
-        # Add all files to the git index and then run diff --cached to see all changes.
-        # This ensures that we get the status of all files, including new files.
-        # We ignore npm-shrinkwrap.json to make the tasks immune to npm changes.
-        run: |
-          git add .
-          git reset -- npm-shrinkwrap.json
-          git diff --cached --exit-code
-  PHPUnit:
-    runs-on: ${{ matrix.os }}
     services:
-      exttests:
-        image: moodlehq/moodle-exttests
+      mariadb:
+        image: mariadb:10.6
+        env:
+          MYSQL_USER: 'root'
+          MYSQL_ALLOW_EMPTY_PASSWORD: "true"
         ports:
-          - 8080:80
-      redis:
-        image: redis
-        ports:
-          - 6379:6379
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval 10s --health-timeout 5s --health-retries 3
+
     strategy:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-18.04
-            php: 7.3
-            extensions:
-            db: mysqli
-          - os: ubuntu-18.04
-            php: 8.0
-            db: pgsql
-            extensions: xmlrpc-beta
+          - php: '8.1'
+            moodle-branch: 'MOODLE_402_STABLE'
+            database: mariadb
+          - php: '8.0'
+            moodle-branch: 'MOODLE_402_STABLE'
+            database: mariadb
+          - php: '8.0'
+            moodle-branch: 'MOODLE_401_STABLE'
+            database: mariadb
+          - php: '7.4'
+            moodle-branch: 'MOODLE_401_STABLE'
+            database: mariadb
+          - php: '7.4'
+            moodle-branch: 'MOODLE_400_STABLE'
+            database: mariadb
+          - php: '7.4'
+            moodle-branch: 'MOODLE_311_STABLE'
+            database: mariadb
+          - php: '7.4'
+            moodle-branch: 'MOODLE_310_STABLE'
+            database: mariadb
+          - php: '7.4'
+            moodle-branch: 'MOODLE_39_STABLE'
+            database: mariadb
 
     steps:
-      - name: Setting up DB mysql
-        if: ${{ matrix.db == 'mysqli' }}
-        uses: johanmeiring/mysql-action@tmpfs-patch
+      - name: Check out repository code
+        uses: actions/checkout@v3
         with:
-          collation server: utf8mb4_bin
-          mysql version: 5.7
-          mysql database: test
-          mysql user: test
-          mysql password: test
-          use tmpfs: true
+          path: plugin
 
-      - name: Setting up DB pgsql
-        if: ${{ matrix.db == 'pgsql' }}
-        uses: m4nu56/postgresql-action@v1
-        with:
-          postgresql version: 10
-          postgresql db: test
-          postgresql user: test
-          postgresql password: test
-
-      - name: Configuring git vars
-        uses: rlespinasse/github-slug-action@v3.x
-
-      - name: Setting up PHP ${{ matrix.php }}
+      - name: Setup PHP ${{ matrix.php }}
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
@@ -94,19 +59,54 @@ jobs:
           ini-values: max_input_vars=5000
           coverage: none
 
-      - name: Checking out code from ${{ env.GITHUB_REF_SLUG }}
-        uses: actions/checkout@v2
-
-      - name: Setting up PHPUnit
-        env:
-          dbtype: ${{ matrix.db }}
+      - name: Initialise moodle-plugin-ci
         run: |
-          echo "pathtophp=$(which php)" >> $GITHUB_ENV # Inject installed pathtophp to env. The template config needs it.
-          cp .github/workflows/config-template.php config.php
-          mkdir ../moodledata
+          composer create-project -n --no-dev --prefer-dist moodlehq/moodle-plugin-ci ci ^3
+          echo $(cd ci/bin; pwd) >> $GITHUB_PATH
+          echo $(cd ci/vendor/bin; pwd) >> $GITHUB_PATH
           sudo locale-gen en_AU.UTF-8
-          php admin/tool/phpunit/cli/init.php --no-composer-self-update
-      - name: Running PHPUnit tests
+          echo "NVM_DIR=$HOME/.nvm" >> $GITHUB_ENV
+
+      - name: Install moodle-plugin-ci
+        run: |
+          moodle-plugin-ci install --plugin ./plugin --db-host=127.0.0.1
         env:
-          dbtype: ${{ matrix.db }}
-        run: vendor/bin/phpunit -v
+          DB: ${{ matrix.database }}
+          MOODLE_BRANCH: ${{ matrix.moodle-branch }}
+          IGNORE_PATHS: moodle/tests/fixtures,moodle/Sniffs
+          CODECHECKER_IGNORE_PATHS: classes/vendor
+          PHPDOCCHECKER_IGNORE_PATHS: classes/vendor
+
+      - name: PHP Lint
+        if: ${{ always() }}
+        run: moodle-plugin-ci phplint
+
+      - name: PHP Copy/Paste Detector
+        continue-on-error: true # This step will show errors but will not fail
+        if: ${{ always() }}
+        run: moodle-plugin-ci phpcpd
+
+      - name: PHP Mess Detector
+        continue-on-error: true # This step will show errors but will not fail
+        if: ${{ always() }}
+        run: moodle-plugin-ci phpmd
+
+      - name: Moodle Code Checker
+        if: ${{ always() }}
+        run: moodle-plugin-ci codechecker --max-warnings 0 || true
+
+      - name: Moodle PHPDoc Checker
+        if: ${{ always() }}
+        run: moodle-plugin-ci phpdoc || true
+
+      - name: Validating
+        if: ${{ always() }}
+        run: moodle-plugin-ci validate
+
+      - name: Check upgrade savepoints
+        if: ${{ always() }}
+        run: moodle-plugin-ci savepoints
+
+      - name: PHPUnit tests
+        if: ${{ always() }}
+        run: moodle-plugin-ci phpunit --fail-on-warning

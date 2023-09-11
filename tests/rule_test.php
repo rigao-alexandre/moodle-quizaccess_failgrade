@@ -24,10 +24,23 @@
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+namespace quizaccess_failgrade;
+
+use advanced_testcase;
+use quizaccess_failgrade;
+use stdClass;
+
 defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
+
 require_once($CFG->dirroot . '/mod/quiz/accessrule/failgrade/rule.php');
+
+// This work-around is required until Moodle 4.2 is the lowest version we support.
+if (class_exists('\mod_quiz\local\access_rule_base')) {
+    // Use aliases at class_loader level to maintain compatibility.
+    \class_alias(\mod_quiz\quiz_attempt::class, quiz_attempt::class);
+}
 
 /**
  * Unit tests for the quizaccess_failgrade plugin.

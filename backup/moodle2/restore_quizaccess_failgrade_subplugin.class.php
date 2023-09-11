@@ -14,19 +14,29 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-
-require_once($CFG->dirroot . '/mod/quiz/backup/moodle2/restore_mod_quiz_access_subplugin.class.php');
-
-defined('MOODLE_INTERNAL') || die();
-
-
 /**
  * Restore code for the quizaccess_failgrade plugin.
+ *
  * @package   quizaccess_failgrade
  * @copyright 2023 Leon Stringer
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
- 
+
+defined('MOODLE_INTERNAL') || die();
+
+require_once($CFG->dirroot . '/mod/quiz/backup/moodle2/restore_mod_quiz_access_subplugin.class.php');
+
+/**
+ * Provides the information to restore the failgrade quiz access plugin.
+ *
+ * If this plugin is required, a single
+ * <quizaccess_failgrade><required>1</required></quizaccess_failgrade> tag
+ * will be in the XML, and this needs to be written to the DB. Otherwise, nothing
+ * needs to be written to the DB.
+ *
+ * @copyright 2023 Leon Stringer
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class restore_quizaccess_failgrade_subplugin extends restore_mod_quiz_access_subplugin {
 
     protected function define_quiz_subplugin_structure() {

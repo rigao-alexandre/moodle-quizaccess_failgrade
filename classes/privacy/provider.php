@@ -24,8 +24,6 @@
 
 namespace quizaccess_failgrade\privacy;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Privacy Subsystem implementation for quizaccess_failgrade.
  *

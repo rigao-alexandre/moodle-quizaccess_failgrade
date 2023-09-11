@@ -20,18 +20,18 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # - php: '8.1'
-          #   moodle-branch: 'MOODLE_402_STABLE'
-          #   database: mariadb
-          # - php: '8.0'
-          #   moodle-branch: 'MOODLE_402_STABLE'
-          #   database: mariadb
-          # - php: '8.0'
-          #   moodle-branch: 'MOODLE_401_STABLE'
-          #   database: mariadb
-          # - php: '7.4'
-          #   moodle-branch: 'MOODLE_401_STABLE'
-          #   database: mariadb
+          - php: '8.1'
+            moodle-branch: 'MOODLE_402_STABLE'
+            database: mariadb
+          - php: '8.0'
+            moodle-branch: 'MOODLE_402_STABLE'
+            database: mariadb
+          - php: '8.0'
+            moodle-branch: 'MOODLE_401_STABLE'
+            database: mariadb
+          - php: '7.4'
+            moodle-branch: 'MOODLE_401_STABLE'
+            database: mariadb
           - php: '7.4'
             moodle-branch: 'MOODLE_400_STABLE'
             database: mariadb
@@ -110,3 +110,15 @@ jobs:
       - name: PHPUnit tests
         if: ${{ always() }}
         run: moodle-plugin-ci phpunit --fail-on-warning
+
+      - name: Mustache Lint
+        if: ${{ always() }}
+        run: moodle-plugin-ci mustache
+
+      - name: Grunt
+        if: ${{ matrix.moodle-branch == 'MOODLE_401_STABLE' }}
+        run: moodle-plugin-ci grunt --max-lint-warnings 0
+
+      - name: Behat features
+        if: ${{ always() }}
+        run: moodle-plugin-ci behat --profile chrome

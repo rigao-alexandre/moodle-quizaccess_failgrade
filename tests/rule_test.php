@@ -84,7 +84,7 @@ class quizaccess_failgrade_testcase extends advanced_testcase {
                 'grademethod' => QUIZ_GRADEHIGHEST,
                 'failgradeenabled' => 0,
         ]);
-        $quizobj = quiz::create($quiz->id, $user->id);
+        $quizobj = \quiz::create($quiz->id, $user->id);
 
         $rule = quizaccess_failgrade::make($quizobj, 0, false);
         $this->assertNull($rule);
@@ -100,7 +100,7 @@ class quizaccess_failgrade_testcase extends advanced_testcase {
             'grademethod' => QUIZ_GRADEHIGHEST,
             'failgradeenabled' => 1,
         ]);
-        $quizobj = quiz::create($quiz->id, $user->id);
+        $quizobj = \quiz::create($quiz->id, $user->id);
 
         $rule = quizaccess_failgrade::make($quizobj, 0, false);
         $this->assertInstanceOf('quizaccess_failgrade', $rule);
@@ -142,7 +142,7 @@ class quizaccess_failgrade_testcase extends advanced_testcase {
             'grademethod' => QUIZ_GRADEHIGHEST,
             'failgradeenabled' => 1,
         ]);
-        $quizobj = quiz::create($quiz->id, $user->id);
+        $quizobj = \quiz::create($quiz->id, $user->id);
 
         $rule = quizaccess_failgrade::make($quizobj, 0, false);
 
@@ -241,7 +241,7 @@ class quizaccess_failgrade_testcase extends advanced_testcase {
             'grademethod' => QUIZ_ATTEMPTFIRST,
             'failgradeenabled' => 1,
         ]);
-        $quizobj = quiz::create($quiz->id, $user->id);
+        $quizobj = \quiz::create($quiz->id, $user->id);
 
         $rule = quizaccess_failgrade::make($quizobj, 0, false);
 
@@ -299,7 +299,7 @@ class quizaccess_failgrade_testcase extends advanced_testcase {
             'grademethod' => QUIZ_ATTEMPTFIRST,
             'failgradeenabled' => 1,
         ]);
-        $quizobj = quiz::create($quiz->id, $user->id);
+        $quizobj = \quiz::create($quiz->id, $user->id);
 
         $rule = quizaccess_failgrade::make($quizobj, 0, false);
 
@@ -370,7 +370,7 @@ class quizaccess_failgrade_testcase extends advanced_testcase {
             'grademethod' => QUIZ_ATTEMPTLAST,
             'failgradeenabled' => 1,
         ]);
-        $quizobj = quiz::create($quiz->id, $user->id);
+        $quizobj = \quiz::create($quiz->id, $user->id);
 
         $rule = quizaccess_failgrade::make($quizobj, 0, false);
 
@@ -452,7 +452,7 @@ class quizaccess_failgrade_testcase extends advanced_testcase {
             'grademethod' => QUIZ_GRADEAVERAGE,
             'failgradeenabled' => 1,
         ]);
-        $quizobj = quiz::create($quiz->id, $user->id);
+        $quizobj = \quiz::create($quiz->id, $user->id);
 
         $rule = quizaccess_failgrade::make($quizobj, 0, false);
 

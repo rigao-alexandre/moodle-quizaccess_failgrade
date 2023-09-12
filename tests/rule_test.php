@@ -146,7 +146,7 @@ class quizaccess_failgrade_testcase extends advanced_testcase {
 
         $rule = quizaccess_failgrade::make($quizobj, 0, false);
 
-        $item = grade_item::fetch([
+        $item = \grade_item::fetch([
             'courseid' => $course->id,
             'itemtype' => 'mod',
             'itemmodule' => 'quiz',
@@ -245,7 +245,7 @@ class quizaccess_failgrade_testcase extends advanced_testcase {
 
         $rule = quizaccess_failgrade::make($quizobj, 0, false);
 
-        $item = grade_item::fetch([
+        $item = \grade_item::fetch([
             'courseid' => $course->id,
             'itemtype' => 'mod',
             'itemmodule' => 'quiz',
@@ -303,7 +303,7 @@ class quizaccess_failgrade_testcase extends advanced_testcase {
 
         $rule = quizaccess_failgrade::make($quizobj, 0, false);
 
-        $item = grade_item::fetch([
+        $item = \grade_item::fetch([
             'courseid' => $course->id,
             'itemtype' => 'mod',
             'itemmodule' => 'quiz',
@@ -374,7 +374,7 @@ class quizaccess_failgrade_testcase extends advanced_testcase {
 
         $rule = quizaccess_failgrade::make($quizobj, 0, false);
 
-        $item = grade_item::fetch([
+        $item = \grade_item::fetch([
             'courseid' => $course->id,
             'itemtype' => 'mod',
             'itemmodule' => 'quiz',
@@ -456,7 +456,7 @@ class quizaccess_failgrade_testcase extends advanced_testcase {
 
         $rule = quizaccess_failgrade::make($quizobj, 0, false);
 
-        $item = grade_item::fetch([
+        $item = \grade_item::fetch([
             'courseid' => $course->id,
             'itemtype' => 'mod',
             'itemmodule' => 'quiz',

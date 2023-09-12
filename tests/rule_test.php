@@ -164,7 +164,7 @@ class quizaccess_failgrade_testcase extends advanced_testcase {
         quiz_add_quiz_question($numq->id, $quiz);
 
         // Fail
-        $quba = question_engine::make_questions_usage_by_activity('mod_quiz', $quizobj->get_context());
+        $quba = \question_engine::make_questions_usage_by_activity('mod_quiz', $quizobj->get_context());
         $quba->set_preferred_behaviour($quizobj->get_quiz()->preferredbehaviour);
         $timenow = time();
         $attempt = quiz_create_attempt($quizobj, 1, false, $timenow, false, $user->id);
@@ -178,7 +178,7 @@ class quizaccess_failgrade_testcase extends advanced_testcase {
         $this->assertEmpty($rule->prevent_new_attempt(1, $attempt));
 
         // Pass
-        $quba = question_engine::make_questions_usage_by_activity('mod_quiz', $quizobj->get_context());
+        $quba = \question_engine::make_questions_usage_by_activity('mod_quiz', $quizobj->get_context());
         $quba->set_preferred_behaviour($quizobj->get_quiz()->preferredbehaviour);
         $timenow = time();
         $attempt = quiz_create_attempt($quizobj, 2, false, $timenow, false, $user->id);
@@ -192,7 +192,7 @@ class quizaccess_failgrade_testcase extends advanced_testcase {
         $this->assertNotEmpty($rule->prevent_new_attempt(2, $attempt));
 
         // Fail
-        $quba = question_engine::make_questions_usage_by_activity('mod_quiz', $quizobj->get_context());
+        $quba = \question_engine::make_questions_usage_by_activity('mod_quiz', $quizobj->get_context());
         $quba->set_preferred_behaviour($quizobj->get_quiz()->preferredbehaviour);
         $timenow = time();
         $attempt = quiz_create_attempt($quizobj, 3, false, $timenow, false, $user->id);
@@ -262,7 +262,7 @@ class quizaccess_failgrade_testcase extends advanced_testcase {
         $numq = $questiongenerator->create_question('numerical', null, ['category' => $cat->id]);
         quiz_add_quiz_question($numq->id, $quiz);
 
-        $quba = question_engine::make_questions_usage_by_activity('mod_quiz', $quizobj->get_context());
+        $quba = \question_engine::make_questions_usage_by_activity('mod_quiz', $quizobj->get_context());
         $quba->set_preferred_behaviour($quizobj->get_quiz()->preferredbehaviour);
         $timenow = time();
         $attempt = quiz_create_attempt($quizobj, 1, false, $timenow, false, $user->id);
@@ -275,7 +275,7 @@ class quizaccess_failgrade_testcase extends advanced_testcase {
         $this->assertFalse($rule->is_finished(1, $attempt));
         $this->assertEmpty($rule->prevent_new_attempt(1, $attempt));
 
-        $quba = question_engine::make_questions_usage_by_activity('mod_quiz', $quizobj->get_context());
+        $quba = \question_engine::make_questions_usage_by_activity('mod_quiz', $quizobj->get_context());
         $quba->set_preferred_behaviour($quizobj->get_quiz()->preferredbehaviour);
         $timenow = time();
         $attempt = quiz_create_attempt($quizobj, 2, false, $timenow, false, $user->id);
@@ -320,7 +320,7 @@ class quizaccess_failgrade_testcase extends advanced_testcase {
         $numq = $questiongenerator->create_question('numerical', null, ['category' => $cat->id]);
         quiz_add_quiz_question($numq->id, $quiz);
 
-        $quba = question_engine::make_questions_usage_by_activity('mod_quiz', $quizobj->get_context());
+        $quba = \question_engine::make_questions_usage_by_activity('mod_quiz', $quizobj->get_context());
         $quba->set_preferred_behaviour($quizobj->get_quiz()->preferredbehaviour);
         $timenow = time();
         $attempt = quiz_create_attempt($quizobj, 1, false, $timenow, false, $user->id);
@@ -391,7 +391,7 @@ class quizaccess_failgrade_testcase extends advanced_testcase {
         $numq = $questiongenerator->create_question('numerical', null, ['category' => $cat->id]);
         quiz_add_quiz_question($numq->id, $quiz);
 
-        $quba = question_engine::make_questions_usage_by_activity('mod_quiz', $quizobj->get_context());
+        $quba = \question_engine::make_questions_usage_by_activity('mod_quiz', $quizobj->get_context());
         $quba->set_preferred_behaviour($quizobj->get_quiz()->preferredbehaviour);
         $timenow = time();
         $attempt = quiz_create_attempt($quizobj, 1, false, $timenow, false, $user->id);
@@ -404,7 +404,7 @@ class quizaccess_failgrade_testcase extends advanced_testcase {
         $this->assertFalse($rule->is_finished(1, $attempt));
         $this->assertEmpty($rule->prevent_new_attempt(1, $attempt));
 
-        $quba = question_engine::make_questions_usage_by_activity('mod_quiz', $quizobj->get_context());
+        $quba = \question_engine::make_questions_usage_by_activity('mod_quiz', $quizobj->get_context());
         $quba->set_preferred_behaviour($quizobj->get_quiz()->preferredbehaviour);
         $timenow = time();
         $attempt = quiz_create_attempt($quizobj, 2, false, $timenow, false, $user->id);
@@ -473,7 +473,7 @@ class quizaccess_failgrade_testcase extends advanced_testcase {
         $numq = $questiongenerator->create_question('numerical', null, ['category' => $cat->id]);
         quiz_add_quiz_question($numq->id, $quiz);
 
-        $quba = question_engine::make_questions_usage_by_activity('mod_quiz', $quizobj->get_context());
+        $quba = \question_engine::make_questions_usage_by_activity('mod_quiz', $quizobj->get_context());
         $quba->set_preferred_behaviour($quizobj->get_quiz()->preferredbehaviour);
         $timenow = time();
         $attempt = quiz_create_attempt($quizobj, 1, false, $timenow, false, $user->id);
@@ -486,7 +486,7 @@ class quizaccess_failgrade_testcase extends advanced_testcase {
         $this->assertFalse($rule->is_finished(1, $attempt));
         $this->assertEmpty($rule->prevent_new_attempt(1, $attempt));
 
-        $quba = question_engine::make_questions_usage_by_activity('mod_quiz', $quizobj->get_context());
+        $quba = \question_engine::make_questions_usage_by_activity('mod_quiz', $quizobj->get_context());
         $quba->set_preferred_behaviour($quizobj->get_quiz()->preferredbehaviour);
         $timenow = time();
         $attempt = quiz_create_attempt($quizobj, 2, false, $timenow, false, $user->id);

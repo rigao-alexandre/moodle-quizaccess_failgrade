@@ -39,7 +39,7 @@ require_once($CFG->dirroot . '/mod/quiz/accessrule/failgrade/rule.php');
 // This work-around is required until Moodle 4.2 is the lowest version we support.
 if (class_exists('\mod_quiz\local\access_rule_base')) {
     // Use aliases at class_loader level to maintain compatibility.
-    \class_alias(\mod_quiz\quiz_attempt::class, quiz_attempt::class);
+    \class_alias(\mod_quiz\quiz_attempt::class, \quiz_attempt::class);
 }
 
 /**
@@ -170,7 +170,7 @@ class quizaccess_failgrade_testcase extends advanced_testcase {
         $attempt = quiz_create_attempt($quizobj, 1, false, $timenow, false, $user->id);
         quiz_start_new_attempt($quizobj, $quba, $attempt, 1, $timenow);
         quiz_attempt_save_started($quizobj, $quba, $attempt);
-        $attemptobj = quiz_attempt::create($attempt->id);
+        $attemptobj = \quiz_attempt::create($attempt->id);
         $attemptobj->process_submitted_actions($timenow, false, [1 => ['answer' => '3.14']]);
         $attemptobj->process_finish($timenow, false);
 
@@ -184,7 +184,7 @@ class quizaccess_failgrade_testcase extends advanced_testcase {
         $attempt = quiz_create_attempt($quizobj, 2, false, $timenow, false, $user->id);
         quiz_start_new_attempt($quizobj, $quba, $attempt, 2, $timenow);
         quiz_attempt_save_started($quizobj, $quba, $attempt);
-        $attemptobj = quiz_attempt::create($attempt->id);
+        $attemptobj = \quiz_attempt::create($attempt->id);
         $attemptobj->process_submitted_actions($timenow, false, [1 => ['answer' => '3.14'], 2 => ['answer' => '3.14']]);
         $attemptobj->process_finish($timenow, false);
 
@@ -198,7 +198,7 @@ class quizaccess_failgrade_testcase extends advanced_testcase {
         $attempt = quiz_create_attempt($quizobj, 3, false, $timenow, false, $user->id);
         quiz_start_new_attempt($quizobj, $quba, $attempt, 3, $timenow);
         quiz_attempt_save_started($quizobj, $quba, $attempt);
-        $attemptobj = quiz_attempt::create($attempt->id);
+        $attemptobj = \quiz_attempt::create($attempt->id);
         $attemptobj->process_submitted_actions($timenow, false, [1 => ['answer' => '3.14']]);
         $attemptobj->process_finish($timenow, false);
 
@@ -268,7 +268,7 @@ class quizaccess_failgrade_testcase extends advanced_testcase {
         $attempt = quiz_create_attempt($quizobj, 1, false, $timenow, false, $user->id);
         quiz_start_new_attempt($quizobj, $quba, $attempt, 1, $timenow);
         quiz_attempt_save_started($quizobj, $quba, $attempt);
-        $attemptobj = quiz_attempt::create($attempt->id);
+        $attemptobj = \quiz_attempt::create($attempt->id);
         $attemptobj->process_submitted_actions($timenow, false, [1 => ['answer' => '3.14']]);
         $attemptobj->process_finish($timenow, false);
 
@@ -281,7 +281,7 @@ class quizaccess_failgrade_testcase extends advanced_testcase {
         $attempt = quiz_create_attempt($quizobj, 2, false, $timenow, false, $user->id);
         quiz_start_new_attempt($quizobj, $quba, $attempt, 2, $timenow);
         quiz_attempt_save_started($quizobj, $quba, $attempt);
-        $attemptobj = quiz_attempt::create($attempt->id);
+        $attemptobj = \quiz_attempt::create($attempt->id);
         $attemptobj->process_submitted_actions($timenow, false, [1 => ['answer' => '3.14'], 2 => ['answer' => '3.14']]);
         $attemptobj->process_finish($timenow, false);
 
@@ -326,7 +326,7 @@ class quizaccess_failgrade_testcase extends advanced_testcase {
         $attempt = quiz_create_attempt($quizobj, 1, false, $timenow, false, $user->id);
         quiz_start_new_attempt($quizobj, $quba, $attempt, 1, $timenow);
         quiz_attempt_save_started($quizobj, $quba, $attempt);
-        $attemptobj = quiz_attempt::create($attempt->id);
+        $attemptobj = \quiz_attempt::create($attempt->id);
         $attemptobj->process_submitted_actions($timenow, false, [1 => ['answer' => '3.14'], 2 => ['answer' => '3.14']]);
         $attemptobj->process_finish($timenow, false);
 
@@ -397,7 +397,7 @@ class quizaccess_failgrade_testcase extends advanced_testcase {
         $attempt = quiz_create_attempt($quizobj, 1, false, $timenow, false, $user->id);
         quiz_start_new_attempt($quizobj, $quba, $attempt, 1, $timenow);
         quiz_attempt_save_started($quizobj, $quba, $attempt);
-        $attemptobj = quiz_attempt::create($attempt->id);
+        $attemptobj = \quiz_attempt::create($attempt->id);
         $attemptobj->process_submitted_actions($timenow, false, [1 => ['answer' => '3.14']]);
         $attemptobj->process_finish($timenow, false);
 
@@ -410,7 +410,7 @@ class quizaccess_failgrade_testcase extends advanced_testcase {
         $attempt = quiz_create_attempt($quizobj, 2, false, $timenow, false, $user->id);
         quiz_start_new_attempt($quizobj, $quba, $attempt, 2, $timenow);
         quiz_attempt_save_started($quizobj, $quba, $attempt);
-        $attemptobj = quiz_attempt::create($attempt->id);
+        $attemptobj = \quiz_attempt::create($attempt->id);
         $attemptobj->process_submitted_actions($timenow, false, [1 => ['answer' => '3.14'], 2 => ['answer' => '3.14']]);
         $attemptobj->process_finish($timenow, false);
 
@@ -479,7 +479,7 @@ class quizaccess_failgrade_testcase extends advanced_testcase {
         $attempt = quiz_create_attempt($quizobj, 1, false, $timenow, false, $user->id);
         quiz_start_new_attempt($quizobj, $quba, $attempt, 1, $timenow);
         quiz_attempt_save_started($quizobj, $quba, $attempt);
-        $attemptobj = quiz_attempt::create($attempt->id);
+        $attemptobj = \quiz_attempt::create($attempt->id);
         $attemptobj->process_submitted_actions($timenow, false, [1 => ['answer' => '3.14']]);
         $attemptobj->process_finish($timenow, false);
 
@@ -492,7 +492,7 @@ class quizaccess_failgrade_testcase extends advanced_testcase {
         $attempt = quiz_create_attempt($quizobj, 2, false, $timenow, false, $user->id);
         quiz_start_new_attempt($quizobj, $quba, $attempt, 2, $timenow);
         quiz_attempt_save_started($quizobj, $quba, $attempt);
-        $attemptobj = quiz_attempt::create($attempt->id);
+        $attemptobj = \quiz_attempt::create($attempt->id);
         $attemptobj->process_submitted_actions($timenow, false, [1 => ['answer' => '3.14'], 2 => ['answer' => '3.14']]);
         $attemptobj->process_finish($timenow, false);
 

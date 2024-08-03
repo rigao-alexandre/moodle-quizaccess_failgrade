@@ -28,18 +28,17 @@ namespace quizaccess_failgrade;
 
 use advanced_testcase;
 use quizaccess_failgrade;
-use stdClass;
 
 defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
 
-require_once($CFG->dirroot . '/mod/quiz/accessrule/failgrade/rule.php');
+require_once ($CFG->dirroot . '/mod/quiz/accessrule/failgrade/rule.php');
 
 // This work-around is required until Moodle 4.2 is the lowest version we support.
 if (class_exists('\mod_quiz\local\access_rule_base')) {
     // Use aliases at class_loader level to maintain compatibility.
-    \class_alias(\mod_quiz\quiz_attempt::class, \quiz_attempt::class);
+    \class_alias('\mod_quiz\quiz_attempt', '\quiz_attempt');
 }
 
 /**
@@ -48,8 +47,10 @@ if (class_exists('\mod_quiz\local\access_rule_base')) {
  * @copyright 2020 Alexandre Paes Rigão <rigao.com.br>
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class quizaccess_failgrade_testcase extends advanced_testcase {
-    public function test_setting() {
+class quizaccess_failgrade_testcase extends advanced_testcase
+{
+    public function test_setting()
+    {
         global $CFG;
 
         $this->resetAfterTest();
@@ -60,8 +61,8 @@ class quizaccess_failgrade_testcase extends advanced_testcase {
         $generator = $this->getDataGenerator();
 
         $course = $generator->create_course(
-                ['numsections' => 1, 'enablecompletion' => 1],
-                ['createsections' => true]
+            ['numsections' => 1, 'enablecompletion' => 1],
+            ['createsections' => true]
         );
 
         $user = $generator->create_user();
@@ -75,14 +76,14 @@ class quizaccess_failgrade_testcase extends advanced_testcase {
 
         // Test 1.
         $quiz = $quizgenerator->create_instance([
-                'course' => $course->id,
-                'questionsperpage' => 0,
-                'grade' => 10.0,
-                'sumgrades' => 2,
-                'attempts' => 5,
-                'name' => 'Quiz!',
-                'grademethod' => QUIZ_GRADEHIGHEST,
-                'failgradeenabled' => 0,
+            'course' => $course->id,
+            'questionsperpage' => 0,
+            'grade' => 10.0,
+            'sumgrades' => 2,
+            'attempts' => 5,
+            'name' => 'Quiz!',
+            'grademethod' => QUIZ_GRADEHIGHEST,
+            'failgradeenabled' => 0,
         ]);
         $quizobj = \quiz::create($quiz->id, $user->id);
 
@@ -108,7 +109,8 @@ class quizaccess_failgrade_testcase extends advanced_testcase {
         $this->assertEmpty($rule->prevent_new_attempt(0, null));
     }
 
-    public function test_grade_highest() {
+    public function test_grade_highest()
+    {
         global $CFG;
 
         $this->resetAfterTest();
@@ -119,8 +121,8 @@ class quizaccess_failgrade_testcase extends advanced_testcase {
         $generator = $this->getDataGenerator();
 
         $course = $generator->create_course(
-                ['numsections' => 1, 'enablecompletion' => 1],
-                ['createsections' => true]
+            ['numsections' => 1, 'enablecompletion' => 1],
+            ['createsections' => true]
         );
 
         $user = $generator->create_user();
@@ -206,7 +208,8 @@ class quizaccess_failgrade_testcase extends advanced_testcase {
         $this->assertNotEmpty($rule->prevent_new_attempt(3, $attempt));
     }
 
-    public function test_grade_firstattempt() {
+    public function test_grade_firstattempt()
+    {
         global $CFG;
 
         $this->resetAfterTest();
@@ -217,8 +220,8 @@ class quizaccess_failgrade_testcase extends advanced_testcase {
         $generator = $this->getDataGenerator();
 
         $course = $generator->create_course(
-                ['numsections' => 1, 'enablecompletion' => 1],
-                ['createsections' => true]
+            ['numsections' => 1, 'enablecompletion' => 1],
+            ['createsections' => true]
         );
 
         $user = $generator->create_user();
@@ -334,7 +337,8 @@ class quizaccess_failgrade_testcase extends advanced_testcase {
         $this->assertNotEmpty($rule->prevent_new_attempt(1, $attempt));
     }
 
-    public function test_grade_lastattempt() {
+    public function test_grade_lastattempt()
+    {
         global $CFG;
 
         $this->resetAfterTest();
@@ -345,8 +349,8 @@ class quizaccess_failgrade_testcase extends advanced_testcase {
         $generator = $this->getDataGenerator();
 
         $course = $generator->create_course(
-                ['numsections' => 1, 'enablecompletion' => 1],
-                ['createsections' => true]
+            ['numsections' => 1, 'enablecompletion' => 1],
+            ['createsections' => true]
         );
 
         $user = $generator->create_user();
@@ -418,7 +422,8 @@ class quizaccess_failgrade_testcase extends advanced_testcase {
         $this->assertNotEmpty($rule->prevent_new_attempt(2, $attempt));
     }
 
-    public function test_grade_average() {
+    public function test_grade_average()
+    {
         global $CFG;
 
         $this->resetAfterTest();
@@ -429,8 +434,8 @@ class quizaccess_failgrade_testcase extends advanced_testcase {
         $generator = $this->getDataGenerator();
 
         $course = $generator->create_course(
-                ['numsections' => 1, 'enablecompletion' => 1],
-                ['createsections' => true]
+            ['numsections' => 1, 'enablecompletion' => 1],
+            ['createsections' => true]
         );
 
         $user = $generator->create_user();

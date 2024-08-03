@@ -25,14 +25,15 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+require_once ($CFG->libdir . '/gradelib.php');
+
 // This work-around is required until Moodle 4.2 is the lowest version we support.
 if (class_exists('\mod_quiz\local\access_rule_base')) {
     // Use aliases at class_loader level to maintain compatibility.
-    \class_alias(\mod_quiz\local\access_rule_base::class, quiz_access_rule_base::class);
-    \class_alias(\mod_quiz\quiz_settings::class, quiz::class);
+    \class_alias('\mod_quiz\local\access_rule_base', 'quiz_access_rule_base');
+    \class_alias('\mod_quiz\quiz_settings', 'quiz');
 } else {
-    require_once($CFG->dirroot . '/mod/quiz/accessrule/accessrulebase.php');
-    require_once($CFG->libdir . '/gradelib.php');
+    require_once ($CFG->dirroot . '/mod/quiz/accessrule/accessrulebase.php');
 }
 
 /**
@@ -41,7 +42,8 @@ if (class_exists('\mod_quiz\local\access_rule_base')) {
  * @copyright 2020 Alexandre Paes Rigão <rigao.com.br>
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class quizaccess_failgrade extends quiz_access_rule_base {
+class quizaccess_failgrade extends quiz_access_rule_base
+{
     /**
      * Return an appropriately configured instance of this rule, if it is applicable
      * to the given quiz, otherwise return null.
@@ -51,7 +53,8 @@ class quizaccess_failgrade extends quiz_access_rule_base {
      *      time limits by the mod/quiz:ignoretimelimits capability.
      * @return quiz_access_rule_base|null the rule, if applicable, else null.
      */
-    public static function make(quiz $quizobj, $timenow, $canignoretimelimits) {
+    public static function make(quiz $quizobj, $timenow, $canignoretimelimits)
+    {
         if (empty($quizobj->get_quiz()->failgradeenabled)) {
             return null;
         }
@@ -66,7 +69,8 @@ class quizaccess_failgrade extends quiz_access_rule_base {
      * @return string false if access should be allowed, a message explaining the
      *      reason if access should be prevented.
      */
-    public function prevent_new_attempt($numprevattempts, $lastattempt) {
+    public function prevent_new_attempt($numprevattempts, $lastattempt)
+    {
         if ($this->is_finished($numprevattempts, $lastattempt)) {
             return get_string('preventmoreattempts', 'quizaccess_failgrade');
         }
@@ -81,7 +85,8 @@ class quizaccess_failgrade extends quiz_access_rule_base {
      * @return mixed a message, or array of messages, explaining the restriction
      *         (may be '' if no message is appropriate).
      */
-    public function description() {
+    public function description()
+    {
         return get_string('failgradedescription', 'quizaccess_failgrade');
     }
 
@@ -95,7 +100,8 @@ class quizaccess_failgrade extends quiz_access_rule_base {
      * @return bool true if this rule means that this user will never be allowed another
      * attempt at this quiz.
      */
-    public function is_finished($numprevattempts, $lastattempt) {
+    public function is_finished($numprevattempts, $lastattempt)
+    {
         if ($numprevattempts === 0) {
             return false;
         }
@@ -129,7 +135,9 @@ class quizaccess_failgrade extends quiz_access_rule_base {
      * @param MoodleQuickForm $mform the wrapped MoodleQuickForm.
      */
     public static function add_settings_form_fields(
-        mod_quiz_mod_form $quizform, MoodleQuickForm $mform) {
+        mod_quiz_mod_form $quizform,
+        MoodleQuickForm $mform
+    ) {
 
         $mform->addElement('selectyesno', 'failgradeenabled', get_string('failgradeenabled', 'quizaccess_failgrade'));
 
@@ -142,7 +150,8 @@ class quizaccess_failgrade extends quiz_access_rule_base {
      * @param object $quiz the data from the quiz form, including $quiz->id
      *      which is the id of the quiz being saved.
      */
-    public static function save_settings($quiz) {
+    public static function save_settings($quiz)
+    {
         global $DB;
 
         if (empty($quiz->failgradeenabled)) {
@@ -164,7 +173,8 @@ class quizaccess_failgrade extends quiz_access_rule_base {
      *      which is the id of the quiz being deleted.
      * @since Moodle 2.7.1, 2.6.4, 2.5.7
      */
-    public static function delete_settings($quiz) {
+    public static function delete_settings($quiz)
+    {
         global $DB;
 
         $DB->delete_records('quizaccess_failgrade', ['quizid' => $quiz->id]);
@@ -190,7 +200,8 @@ class quizaccess_failgrade extends quiz_access_rule_base {
      *        used named placeholders, and the placeholder names should start with the
      *        plugin name, to avoid collisions.
      */
-    public static function get_settings_sql($quizid) {
+    public static function get_settings_sql($quizid)
+    {
         return [
             'failgradeenabled',
             'LEFT JOIN {quizaccess_failgrade} failgrade ON failgrade.quizid = quiz.id',

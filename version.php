@@ -25,8 +25,8 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version = 2023091000;
+$plugin->version = 2024080100;
 $plugin->requires = 2020060900;
 $plugin->component = 'quizaccess_failgrade';
 $plugin->maturity = MATURITY_STABLE;
-$plugin->release = 'v1.2.0';
+$plugin->release = 'v1.3.0';

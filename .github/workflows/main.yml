@@ -10,7 +10,7 @@ jobs:
       mariadb:
         image: mariadb:10.6
         env:
-          MYSQL_USER: 'root'
+          MYSQL_USER: "root"
           MYSQL_ALLOW_EMPTY_PASSWORD: "true"
         ports:
           - 3306:3306
@@ -20,29 +20,35 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - php: '8.1'
-            moodle-branch: 'MOODLE_402_STABLE'
+          - php: "8.1"
+            moodle-branch: "MOODLE_404_STABLE"
             database: mariadb
-          - php: '8.0'
-            moodle-branch: 'MOODLE_402_STABLE'
+          - php: "8.1"
+            moodle-branch: "MOODLE_403_STABLE"
             database: mariadb
-          - php: '8.0'
-            moodle-branch: 'MOODLE_401_STABLE'
+          - php: "8.1"
+            moodle-branch: "MOODLE_402_STABLE"
             database: mariadb
-          - php: '7.4'
-            moodle-branch: 'MOODLE_401_STABLE'
+          - php: "8.0"
+            moodle-branch: "MOODLE_402_STABLE"
             database: mariadb
-          - php: '7.4'
-            moodle-branch: 'MOODLE_400_STABLE'
+          - php: "8.0"
+            moodle-branch: "MOODLE_401_STABLE"
             database: mariadb
-          - php: '7.4'
-            moodle-branch: 'MOODLE_311_STABLE'
+          - php: "7.4"
+            moodle-branch: "MOODLE_401_STABLE"
             database: mariadb
-          - php: '7.4'
-            moodle-branch: 'MOODLE_310_STABLE'
+          - php: "7.4"
+            moodle-branch: "MOODLE_400_STABLE"
             database: mariadb
-          - php: '7.4'
-            moodle-branch: 'MOODLE_39_STABLE'
+          - php: "7.4"
+            moodle-branch: "MOODLE_311_STABLE"
+            database: mariadb
+          - php: "7.4"
+            moodle-branch: "MOODLE_310_STABLE"
+            database: mariadb
+          - php: "7.4"
+            moodle-branch: "MOODLE_39_STABLE"
             database: mariadb
 
     steps:

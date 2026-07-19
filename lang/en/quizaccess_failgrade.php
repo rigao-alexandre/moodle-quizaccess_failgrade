@@ -26,10 +26,14 @@
 defined('MOODLE_INTERNAL') || die();
 
 $string['pluginname'] = 'Fail grade';
-$string['privacy:metadata'] = 'The Fail grade plugin does not store any personal data.';
 
 $string['failgradeenabled'] = 'Block extra attempts if passing grade';
 $string['failgradeenabled_help'] = 'Prevent user from attempting the quiz again once they have received a passing grade.';
 
 $string['failgradedescription'] = 'Attempts available until reaching passing grade.';
 $string['preventmoreattempts'] = 'You have already passed this quiz, and may not make further attempts.';
+
+$string['privacy:metadata:quizaccess_failgrade_reset'] = 'Records course or user reset events (for example, from local_recompletion or Moodle\'s "Reset course"), so that attempts and grades from before the reset are not used to block new quiz attempts.';
+$string['privacy:metadata:quizaccess_failgrade_reset:courseid'] = 'The course the reset applies to.';
+$string['privacy:metadata:quizaccess_failgrade_reset:userid'] = 'The user the reset applies to, if it was a per-user reset.';
+$string['privacy:metadata:quizaccess_failgrade_reset:timereset'] = 'The time the reset happened.';

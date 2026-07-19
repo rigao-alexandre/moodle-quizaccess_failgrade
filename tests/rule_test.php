@@ -326,6 +326,8 @@ class rule_test extends advanced_testcase
      */
     public function test_is_finished_ignores_attempts_before_a_course_reset()
     {
+        global $DB;
+
         $this->resetAfterTest();
 
         [$course, $user] = $this->create_test_course_and_user();
@@ -338,27 +340,26 @@ class rule_test extends advanced_testcase
         $this->assertTrue($rule->is_finished(1, $attempt));
         $this->assertNotEmpty($rule->prevent_new_attempt(1, $attempt));
 
-        // A course reset happens after that attempt (e.g. annual retraining).
+        // A course reset happens after that attempt (e.g. annual retraining). time() only has
+        // second resolution, so instead of trusting that enough real time passes between the
+        // statements in this test, force the recorded reset to a value derived from the first
+        // attempt's own timestamp: unambiguously after it, regardless of wall-clock timing.
         \core\event\course_reset_ended::create([
             'context' => \context_course::instance($course->id),
             'other' => ['reset_options' => []],
         ])->trigger();
-
-        // time() only has second resolution and this whole test runs well within one second,
-        // so the recorded reset and the attempts above could all land on the same timestamp.
-        // Force an unambiguous ordering instead of relying on wall-clock timing: the reset is
-        // strictly after the first attempt.
-        $attempt->timefinish -= 1;
+        $timereset = $attempt->timefinish + 1;
+        $DB->set_field('quizaccess_failgrade_reset', 'timereset', $timereset, ['courseid' => $course->id]);
 
         // The same old attempt/grade must no longer block, even though numprevattempts is
         // still 1 (the reset tool may not have deleted the quiz_attempts row).
         $this->assertFalse($rule->is_finished(1, $attempt));
         $this->assertEmpty($rule->prevent_new_attempt(1, $attempt));
 
-        // A fresh attempt made after the reset is evaluated normally again (same reasoning:
-        // force it to be unambiguously after the recorded reset).
+        // A fresh attempt made after the reset is evaluated normally again: derive its
+        // timefinish from the recorded reset value for the same reason as above.
         $attempt = $this->do_attempt($quizobj, $user, 2, [1 => ['answer' => '3.14'], 2 => ['answer' => '3.14']]);
-        $attempt->timefinish += 1;
+        $attempt->timefinish = $timereset + 1;
         $this->assertTrue($rule->is_finished(2, $attempt));
         $this->assertNotEmpty($rule->prevent_new_attempt(2, $attempt));
     }

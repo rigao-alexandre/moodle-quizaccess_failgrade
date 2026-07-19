@@ -28,12 +28,16 @@ defined('MOODLE_INTERNAL') || die();
 require_once ($CFG->libdir . '/gradelib.php');
 
 // This work-around is required until Moodle 4.2 is the lowest version we support.
+// Use plugin-specific alias names (not the generic 'quiz' / 'quiz_access_rule_base') so this
+// does not collide with other quizaccess_* plugins doing the same compatibility trick when
+// their rule.php files are loaded together in the same request (e.g. admin/category.php).
 if (class_exists('\mod_quiz\local\access_rule_base')) {
-    // Use aliases at class_loader level to maintain compatibility.
-    \class_alias('\mod_quiz\local\access_rule_base', 'quiz_access_rule_base');
-    \class_alias('\mod_quiz\quiz_settings', 'quiz');
+    \class_alias('\mod_quiz\local\access_rule_base', 'quizaccess_failgrade_access_rule_base');
+    \class_alias('\mod_quiz\quiz_settings', 'quizaccess_failgrade_quiz');
 } else {
     require_once ($CFG->dirroot . '/mod/quiz/accessrule/accessrulebase.php');
+    \class_alias('quiz_access_rule_base', 'quizaccess_failgrade_access_rule_base');
+    \class_alias('quiz', 'quizaccess_failgrade_quiz');
 }
 
 /**
@@ -42,18 +46,18 @@ if (class_exists('\mod_quiz\local\access_rule_base')) {
  * @copyright 2020 Alexandre Paes Rigão <rigao.com.br>
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class quizaccess_failgrade extends quiz_access_rule_base
+class quizaccess_failgrade extends quizaccess_failgrade_access_rule_base
 {
     /**
      * Return an appropriately configured instance of this rule, if it is applicable
      * to the given quiz, otherwise return null.
-     * @param quiz $quizobj information about the quiz in question.
+     * @param quizaccess_failgrade_quiz $quizobj information about the quiz in question.
      * @param int $timenow the time that should be considered as 'now'.
      * @param bool $canignoretimelimits whether the current user is exempt from
      *      time limits by the mod/quiz:ignoretimelimits capability.
-     * @return quiz_access_rule_base|null the rule, if applicable, else null.
+     * @return quizaccess_failgrade_access_rule_base|null the rule, if applicable, else null.
      */
-    public static function make(quiz $quizobj, $timenow, $canignoretimelimits)
+    public static function make(quizaccess_failgrade_quiz $quizobj, $timenow, $canignoretimelimits)
     {
         if (empty($quizobj->get_quiz()->failgradeenabled)) {
             return null;
@@ -117,7 +121,10 @@ class quizaccess_failgrade extends quiz_access_rule_base
         if ($item) {
             $grades = grade_grade::fetch_users_grades($item, [$lastattempt->userid], false);
 
-            $grade = $grades[$lastattempt->userid];
+            // fetch_users_grades() is called with $include_missing = false, so a user with
+            // no grade recorded yet (e.g. a quiz with grading disabled, or grades cleared by
+            // an external tool) simply has no entry in $grades at all.
+            $grade = $grades[$lastattempt->userid] ?? null;
 
             if (!empty($grade)) {
                 return $grade->is_passed($item);

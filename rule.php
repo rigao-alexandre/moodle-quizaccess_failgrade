@@ -149,7 +149,7 @@ class quizaccess_failgrade extends quizaccess_failgrade_access_rule_base
     {
         global $DB;
 
-        $select = 'courseid = :courseid AND (userid IS NULL OR userid = :userid) AND timereset > :timefinish';
+        $select = 'courseid = :courseid AND (userid IS NULL OR userid = :userid) AND timereset >= :timefinish';
         $params = [
             'courseid' => $this->quiz->course,
             'userid' => $lastattempt->userid,

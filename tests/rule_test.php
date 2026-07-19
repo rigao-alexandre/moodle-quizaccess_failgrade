@@ -344,13 +344,21 @@ class rule_test extends advanced_testcase
             'other' => ['reset_options' => []],
         ])->trigger();
 
+        // time() only has second resolution and this whole test runs well within one second,
+        // so the recorded reset and the attempts above could all land on the same timestamp.
+        // Force an unambiguous ordering instead of relying on wall-clock timing: the reset is
+        // strictly after the first attempt.
+        $attempt->timefinish -= 1;
+
         // The same old attempt/grade must no longer block, even though numprevattempts is
         // still 1 (the reset tool may not have deleted the quiz_attempts row).
         $this->assertFalse($rule->is_finished(1, $attempt));
         $this->assertEmpty($rule->prevent_new_attempt(1, $attempt));
 
-        // A fresh attempt made after the reset is evaluated normally again.
+        // A fresh attempt made after the reset is evaluated normally again (same reasoning:
+        // force it to be unambiguously after the recorded reset).
         $attempt = $this->do_attempt($quizobj, $user, 2, [1 => ['answer' => '3.14'], 2 => ['answer' => '3.14']]);
+        $attempt->timefinish += 1;
         $this->assertTrue($rule->is_finished(2, $attempt));
         $this->assertNotEmpty($rule->prevent_new_attempt(2, $attempt));
     }

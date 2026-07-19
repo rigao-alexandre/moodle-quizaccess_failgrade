@@ -17,7 +17,30 @@ Please refer to the official documentation: [Installing Plugins](https://docs.mo
 
 ## Requirements
 
-- Moodle 3.9 (2020060900)
+- Moodle 3.9 (2020060900) through Moodle 5.2, tested via CI against every stable branch in that
+  range (see `.github/workflows/main.yml`).
+
+## Known limitation: course/user resets (recompletion, "Reset course", etc.)
+
+This plugin decides whether to block a new attempt using two things: the user's previous attempts
+on the quiz, and their current grade in the gradebook. It has no notion of "training cycles" - so if
+another tool resets a user's completion/attempts for retraining purposes but leaves their old
+quiz attempts and/or gradebook grade in place, this plugin can keep blocking new attempts, thinking
+the user is reattempting a quiz they already passed.
+
+This has been reported in practice with [local_recompletion](https://github.com/danmarsden/moodle-local_recompletion):
+by default it preserves attempt/grade history (sensible for compliance/audit trails), and its
+per-course "Delete grade data" option is off unless explicitly enabled. If your site resets courses
+for periodic/annual retraining and you don't want a passed quiz to permanently block reattempts
+after a reset:
+
+- **Workaround today:** in the course's recompletion settings, enable both "Quiz attempts: Delete"
+  and "Delete grade data". Note this removes the old grade from the live gradebook (it's still
+  recoverable via Moodle's "Grade history" report, just not visible in the normal grade views) - not
+  ideal if you need the old pass/fail visible as a compliance record.
+- **In progress:** automatic detection of course resets (both Moodle's native "Reset course" and
+  `local_recompletion`) is being worked on, so a reset can be recognised without needing to delete
+  any grade/attempt history. Track progress via the GitHub issues.
 
 # Status / Roadmap
 

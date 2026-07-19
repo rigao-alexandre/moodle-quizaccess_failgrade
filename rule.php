@@ -110,6 +110,10 @@ class quizaccess_failgrade extends quizaccess_failgrade_access_rule_base
             return false;
         }
 
+        if ($this->reset_since($lastattempt)) {
+            return false;
+        }
+
         $item = grade_item::fetch([
             'courseid' => $this->quiz->course,
             'itemtype' => 'mod',
@@ -132,6 +136,27 @@ class quizaccess_failgrade extends quizaccess_failgrade_access_rule_base
         }
 
         return false;
+    }
+
+    /**
+     * Whether a course or user reset (e.g. Moodle's "Reset course", or a local_recompletion
+     * cycle) happened after $lastattempt was finished. If so, that attempt and any grade
+     * belong to a previous cycle and should not be used to block a new attempt.
+     * @param object $lastattempt information about the user's last completed attempt.
+     * @return bool
+     */
+    protected function reset_since($lastattempt)
+    {
+        global $DB;
+
+        $select = 'courseid = :courseid AND (userid IS NULL OR userid = :userid) AND timereset > :timefinish';
+        $params = [
+            'courseid' => $this->quiz->course,
+            'userid' => $lastattempt->userid,
+            'timefinish' => $lastattempt->timefinish,
+        ];
+
+        return $DB->record_exists_select('quizaccess_failgrade_reset', $select, $params);
     }
 
     /**

@@ -314,4 +314,44 @@ class rule_test extends advanced_testcase
         quizaccess_failgrade::delete_settings($quiz);
         $this->assertEquals(0, $DB->count_records('quizaccess_failgrade', ['quizid' => $quiz->id]));
     }
+
+    /**
+     * Tools like local_recompletion or Moodle's own "Reset course" can reset a user's
+     * completion/attempts for a new training cycle without clearing their old passing
+     * grade, which would otherwise keep is_finished() blocking forever. Moodle's native
+     * "Reset course" fires \core\event\course_reset_ended, which observer.php listens for;
+     * this exercises that same path (record_reset()) that local_recompletion's own event
+     * also delegates to - that second observer isn't covered here since local_recompletion
+     * itself isn't part of this plugin's CI environment.
+     */
+    public function test_is_finished_ignores_attempts_before_a_course_reset()
+    {
+        $this->resetAfterTest();
+
+        [$course, $user] = $this->create_test_course_and_user();
+        [$quizobj, $quiz] = $this->create_test_quiz($course, $user, QUIZ_GRADEHIGHEST, 1);
+        $this->set_grade_pass($course, $quiz, 6);
+        $rule = quizaccess_failgrade::make($quizobj, 0, false);
+
+        // Pass: blocked as usual, same as test_grade_highest().
+        $attempt = $this->do_attempt($quizobj, $user, 1, [1 => ['answer' => '3.14'], 2 => ['answer' => '3.14']]);
+        $this->assertTrue($rule->is_finished(1, $attempt));
+        $this->assertNotEmpty($rule->prevent_new_attempt(1, $attempt));
+
+        // A course reset happens after that attempt (e.g. annual retraining).
+        \core\event\course_reset_ended::create([
+            'context' => \context_course::instance($course->id),
+            'other' => ['reset_options' => []],
+        ])->trigger();
+
+        // The same old attempt/grade must no longer block, even though numprevattempts is
+        // still 1 (the reset tool may not have deleted the quiz_attempts row).
+        $this->assertFalse($rule->is_finished(1, $attempt));
+        $this->assertEmpty($rule->prevent_new_attempt(1, $attempt));
+
+        // A fresh attempt made after the reset is evaluated normally again.
+        $attempt = $this->do_attempt($quizobj, $user, 2, [1 => ['answer' => '3.14'], 2 => ['answer' => '3.14']]);
+        $this->assertTrue($rule->is_finished(2, $attempt));
+        $this->assertNotEmpty($rule->prevent_new_attempt(2, $attempt));
+    }
 }

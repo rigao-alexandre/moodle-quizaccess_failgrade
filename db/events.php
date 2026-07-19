@@ -15,21 +15,26 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version information for the quizaccess_failgrade plugin.
+ * Event observers for the quizaccess_failgrade plugin.
  *
- * @package quizaccess
- * @subpackage failgrade
+ * @package quizaccess_failgrade
  * @copyright 2020 Alexandre Paes Rigão <rigao.com.br>
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-// WIP: new quizaccess_failgrade_reset table for course/user reset detection, not released yet.
-$plugin->version = 2026071900;
-$plugin->requires = 2020060900;
-$plugin->component = 'quizaccess_failgrade';
-$plugin->maturity = MATURITY_STABLE;
-$plugin->release = 'v1.4.0';
-// Branch range actually verified against Moodle core (API + CI matrix): 3.9 through 5.2.
-$plugin->supported = [39, 502];
+// The local_recompletion observer is registered by class name even though that class only
+// exists if local_recompletion is installed. This is safe: Moodle only resolves/dispatches an
+// event to an observer when that event actually fires, which never happens if the plugin
+// producing it isn't installed.
+$observers = [
+    [
+        'eventname' => '\core\event\course_reset_ended',
+        'callback' => '\quizaccess_failgrade\observer::course_reset_ended',
+    ],
+    [
+        'eventname' => '\local_recompletion\event\completion_reset',
+        'callback' => '\quizaccess_failgrade\observer::recompletion_completion_reset',
+    ],
+];

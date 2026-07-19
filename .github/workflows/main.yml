@@ -8,7 +8,9 @@ jobs:
 
     services:
       mariadb:
-        image: mariadb:10.6
+        # Moodle 5.2 raised the minimum to MariaDB 10.11 (see admin/environment.xml);
+        # kept at that floor since it stays compatible with every older branch in the matrix too.
+        image: mariadb:10.11
         env:
           MYSQL_USER: "root"
           MYSQL_ALLOW_EMPTY_PASSWORD: "true"
@@ -20,6 +22,27 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - php: "8.4"
+            moodle-branch: "MOODLE_502_STABLE"
+            database: mariadb
+          - php: "8.3"
+            moodle-branch: "MOODLE_502_STABLE"
+            database: mariadb
+          - php: "8.3"
+            moodle-branch: "MOODLE_501_STABLE"
+            database: mariadb
+          - php: "8.2"
+            moodle-branch: "MOODLE_501_STABLE"
+            database: mariadb
+          - php: "8.2"
+            moodle-branch: "MOODLE_500_STABLE"
+            database: mariadb
+          - php: "8.2"
+            moodle-branch: "MOODLE_405_STABLE"
+            database: mariadb
+          - php: "8.1"
+            moodle-branch: "MOODLE_405_STABLE"
+            database: mariadb
           - php: "8.1"
             moodle-branch: "MOODLE_404_STABLE"
             database: mariadb

@@ -52,7 +52,7 @@ if (class_exists('\mod_quiz\local\access_rule_base')) {
  * @copyright 2020 Alexandre Paes Rigão <rigao.com.br>
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class quizaccess_failgrade_testcase extends advanced_testcase
+class rule_test extends advanced_testcase
 {
     /**
      * Create a course with completion/groups enabled and a user enrolled in it.

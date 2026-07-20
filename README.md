@@ -10,10 +10,10 @@ the "Grade to pass" the quiz already has.
 Originally based on two other quiz access rule plugins (see Credits below), simplified and kept up
 to date with current Moodle versions (3.9 through 5.2).
 
-**Compatibility note:** if your site resets courses periodically for retraining (e.g.
-[local_recompletion](https://github.com/danmarsden/moodle-local_recompletion), or Moodle's own
-"Reset course") without clearing old quiz grades, this plugin may keep blocking reattempts after a
-reset - see [Known limitations](https://github.com/rigao-alexandre/moodle-quizaccess_failgrade#known-limitations)
+**Compatibility note:** if your site resets courses periodically for retraining (e.g. Moodle's own
+"Reset course", or a tool like [local_recompletion](https://github.com/danmarsden/moodle-local_recompletion))
+without clearing old quiz grades, this plugin may keep blocking reattempts after a reset - see
+[Known limitations](https://github.com/rigao-alexandre/moodle-quizaccess_failgrade#known-limitations)
 for the current workaround and status.
 
 ## Credits
@@ -34,7 +34,7 @@ Please refer to the official documentation: [Installing Plugins](https://docs.mo
 
 ## Known limitations
 
-### Course/user resets (recompletion, "Reset course", etc.)
+### Course/user resets ("Reset course", recompletion, etc.)
 
 This plugin decides whether to block a new attempt using two things: the user's previous attempts
 on the quiz, and their current grade in the gradebook. It has no notion of "training cycles" - so if

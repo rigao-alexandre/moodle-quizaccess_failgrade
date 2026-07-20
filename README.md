@@ -7,9 +7,6 @@ grading method the quiz is already configured with (highest grade, average, firs
 attempt). Works out of the box: no extra settings to configure, no separate grade field - it reuses
 the "Grade to pass" the quiz already has.
 
-Originally based on two other quiz access rule plugins (see Credits below), simplified and kept up
-to date with current Moodle versions (3.9 through 5.2).
-
 **Compatibility note:** if your site resets courses periodically for retraining (e.g. Moodle's own
 "Reset course", or a tool like [local_recompletion](https://github.com/danmarsden/moodle-local_recompletion))
 without clearing old quiz grades, this plugin may keep blocking reattempts after a reset - see
@@ -21,7 +18,9 @@ for the current workaround and status.
 Originally based on:
 
 - [Reattempt Checker - a quiz access rule](https://github.com/terrycampbell/moodle-quizaccess_reattemptchecker)
+  https://moodle.org/plugins/quizaccess_reattemptchecker
 - [Pass grade quiz access rule](https://github.com/catalyst/moodle-quizaccess_passgrade)
+  https://moodle.org/plugins/quizaccess_passgrade
 
 ## Installation
 

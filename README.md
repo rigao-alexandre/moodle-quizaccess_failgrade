@@ -13,24 +13,6 @@ without clearing old quiz grades, this plugin may keep blocking reattempts after
 [Known limitations](https://github.com/rigao-alexandre/moodle-quizaccess_failgrade#known-limitations)
 for the current workaround and status.
 
-## Credits
-
-Originally based on:
-
-- [Reattempt Checker - a quiz access rule](https://github.com/terrycampbell/moodle-quizaccess_reattemptchecker)
-  https://moodle.org/plugins/quizaccess_reattemptchecker
-- [Pass grade quiz access rule](https://github.com/catalyst/moodle-quizaccess_passgrade)
-  https://moodle.org/plugins/quizaccess_passgrade
-
-## Installation
-
-Please refer to the official documentation: [Installing Plugins](https://docs.moodle.org/en/Installing_plugins)
-
-## Requirements
-
-- Moodle 3.9 (2020060900) through Moodle 5.2, tested via CI against every stable branch in that
-  range (see `.github/workflows/main.yml`).
-
 ## Known limitations
 
 ### Course/user resets ("Reset course", recompletion, etc.)
@@ -61,6 +43,24 @@ after a reset:
 - **In progress:** automatic detection of course resets (both Moodle's native "Reset course" and
   `local_recompletion`) is being worked on, so a reset can be recognised without needing to delete
   any grade/attempt history. Track progress via the GitHub issues.
+
+## Credits
+
+Originally based on:
+
+- [Reattempt Checker - a quiz access rule](https://github.com/terrycampbell/moodle-quizaccess_reattemptchecker)
+  https://moodle.org/plugins/quizaccess_reattemptchecker
+- [Pass grade quiz access rule](https://github.com/catalyst/moodle-quizaccess_passgrade)
+  https://moodle.org/plugins/quizaccess_passgrade
+
+## Installation
+
+Please refer to the official documentation: [Installing Plugins](https://docs.moodle.org/en/Installing_plugins)
+
+## Requirements
+
+- Moodle 3.9 (2020060900) through Moodle 5.2, tested via CI against every stable branch in that
+  range (see `.github/workflows/main.yml`).
 
 ## Status / Roadmap
 

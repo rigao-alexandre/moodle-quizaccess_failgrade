@@ -1,0 +1,62 @@
+name: Bug report
+description: Report a problem with the quizaccess_failgrade plugin
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report an issue! Please fill in as much of this as you
+        can - reports without this context are usually much harder to act on.
+  - type: input
+    id: moodle-version
+    attributes:
+      label: Moodle version
+      description: "Site administration → General → Version"
+      placeholder: "e.g. 4.4.1 (2024042200)"
+    validations:
+      required: true
+  - type: input
+    id: plugin-version
+    attributes:
+      label: Plugin version
+      description: version.php's `release`, or the exact commit if installed from git
+      placeholder: "e.g. v1.3.1"
+    validations:
+      required: true
+  - type: input
+    id: php-version
+    attributes:
+      label: PHP version
+      placeholder: "e.g. 8.1.27"
+    validations:
+      required: true
+  - type: input
+    id: database
+    attributes:
+      label: Database and version
+      placeholder: "e.g. MariaDB 10.11"
+    validations:
+      required: false
+  - type: textarea
+    id: quiz-settings
+    attributes:
+      label: Relevant quiz settings
+      description: Grading method, "grade to pass", number of attempts allowed
+    validations:
+      required: false
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: What did you do, what did you expect to happen, and what actually happened?
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error message / log output
+      description: Any relevant error message, or entry from the Moodle/PHP error log
+      render: shell
+    validations:
+      required: false

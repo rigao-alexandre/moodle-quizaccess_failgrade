@@ -80,6 +80,30 @@ Please refer to the official documentation: [Installing Plugins](https://docs.mo
 
 Please, use GitHub for issues.
 
+### Contributing code or translations
+
+If you'd like to contribute a fix, a new feature, or a translation, a **pull request is strongly
+preferred over attaching a file to an issue** (e.g. a zip with translated strings). A PR shows
+exactly what changed, runs through CI automatically, and is much easier to review and merge than a
+file someone has to download and apply by hand. If you're not comfortable with git/GitHub, opening
+an issue with the file attached is still welcome - it just takes longer to get merged.
+
+### Reporting a bug
+
+To help diagnose the issue, please include:
+
+- **Moodle version** (Site administration → General → Version)
+- **PHP version** and database (MySQL/MariaDB/Postgres) and its version
+- **Plugin version** (see `version.php`'s `release`, e.g. `v1.3.1`, or the exact commit if
+  installed from git)
+- **Quiz settings** relevant to the issue: grading method, "grade to pass", number of attempts
+  allowed
+- **Steps to reproduce**, and what you expected to happen vs. what actually happened
+- Any relevant error message, or entry from the Moodle/PHP error log
+
+Reports without this context are usually much harder to act on, so including it up front saves a
+round trip.
+
 ## License
 
 Licensed under the [GNU GPL License](http://www.gnu.org/copyleft/gpl.html)

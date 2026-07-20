@@ -1,17 +1,29 @@
-
 # Moodle - Fail Grade Quiz Access Rule (quizaccess_failgrade)
 
 ## Description
 
-The purpose of this plugin is to restrict extra attempts on Quiz after the user reach a passing grade.
+Restricts further quiz attempts once a user reaches the quiz's "grade to pass", using whichever
+grading method the quiz is already configured with (highest grade, average, first attempt, last
+attempt). Works out of the box: no extra settings to configure, no separate grade field - it reuses
+the "Grade to pass" the quiz already has.
 
-Based on the [Reattempt Checker - a quiz access rule](https://moodle.org/plugins/quizaccess_reattemptchecker) and [Pass grade quiz access rule](https://moodle.org/plugins/quizaccess_passgrade), the main goal is:
+Originally based on two other quiz access rule plugins (see Credits below), simplified and kept up
+to date with current Moodle versions (3.9 through 5.2).
 
- - update to support newer versions of Moodle
- - simplify the structure and use the already existing field "grade to pass"
- - add tests
+**Compatibility note:** if your site resets courses periodically for retraining (e.g.
+[local_recompletion](https://github.com/danmarsden/moodle-local_recompletion), or Moodle's own
+"Reset course") without clearing old quiz grades, this plugin may keep blocking reattempts after a
+reset - see [Known limitations](https://github.com/rigao-alexandre/moodle-quizaccess_failgrade#known-limitations)
+for the current workaround and status.
 
-# Instalation
+## Credits
+
+Originally based on:
+
+- [Reattempt Checker - a quiz access rule](https://github.com/terrycampbell/moodle-quizaccess_reattemptchecker)
+- [Pass grade quiz access rule](https://github.com/catalyst/moodle-quizaccess_passgrade)
+
+## Installation
 
 Please refer to the official documentation: [Installing Plugins](https://docs.moodle.org/en/Installing_plugins)
 
@@ -20,7 +32,9 @@ Please refer to the official documentation: [Installing Plugins](https://docs.mo
 - Moodle 3.9 (2020060900) through Moodle 5.2, tested via CI against every stable branch in that
   range (see `.github/workflows/main.yml`).
 
-## Known limitation: course/user resets (recompletion, "Reset course", etc.)
+## Known limitations
+
+### Course/user resets (recompletion, "Reset course", etc.)
 
 This plugin decides whether to block a new attempt using two things: the user's previous attempts
 on the quiz, and their current grade in the gradebook. It has no notion of "training cycles" - so if
@@ -42,21 +56,21 @@ after a reset:
   `local_recompletion`) is being worked on, so a reset can be recognised without needing to delete
   any grade/attempt history. Track progress via the GitHub issues.
 
-# Status / Roadmap
+## Status / Roadmap
 
-- [X] Publish plugin on GitHub
+- [x] Publish plugin on GitHub
 
-- [X] Submit to [Moodle Plugins directory](https://moodle.org/plugins/)
+- [x] Submit to [Moodle Plugins directory](https://moodle.org/plugins/)
 
-- [X] GDPR
+- [x] GDPR
 
-- [X] Unit tests
+- [x] Unit tests
 
 - [ ] Behat tests
 
 - [ ] Translate to other languages
 
-# Development
+## Development
 
 Please, use GitHub for issues.
 

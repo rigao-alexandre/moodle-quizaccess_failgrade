@@ -48,10 +48,17 @@ per-course "Delete grade data" option is off unless explicitly enabled. If your 
 for periodic/annual retraining and you don't want a passed quiz to permanently block reattempts
 after a reset:
 
-- **Workaround today:** in the course's recompletion settings, enable both "Quiz attempts: Delete"
-  and "Delete grade data". Note this removes the old grade from the live gradebook (it's still
-  recoverable via Moodle's "Grade history" report, just not visible in the normal grade views) - not
-  ideal if you need the old pass/fail visible as a compliance record.
+- **Moodle's native "Reset course":** already safe with the default options. "Remove all quiz
+  attempts" is checked by default, and when it runs, `mod_quiz` also clears the quiz's gradebook
+  grade as part of the same step - regardless of whether the general "Remove all course grades"
+  option was selected. The issue can only resurface here if "Remove all quiz attempts" is
+  deliberately unchecked while resetting a course for some other reason.
+- **`local_recompletion` workaround today:** in the course's recompletion settings, enable both
+  "Quiz attempts: Delete" and "Delete grade data" - unlike the native reset above, these are fully
+  independent here, and skipping "Delete grade data" leaves the old grade in place. Note this
+  removes the old grade from the live gradebook (it's still recoverable via Moodle's "Grade
+  history" report, just not visible in the normal grade views) - not ideal if you need the old
+  pass/fail visible as a compliance record.
 - **In progress:** automatic detection of course resets (both Moodle's native "Reset course" and
   `local_recompletion`) is being worked on, so a reset can be recognised without needing to delete
   any grade/attempt history. Track progress via the GitHub issues.

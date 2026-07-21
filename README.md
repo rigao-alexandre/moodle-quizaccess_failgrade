@@ -112,12 +112,15 @@ release needs to be packaged first. `.gitattributes` marks the files that don't 
 package on its own - no manual exclude flags to keep in sync:
 
 ```bash
-git archive --format=zip --prefix=failgrade/ v1.3.1 -o quizaccess_failgrade-v1.3.1.zip
+ref=$(git describe --tags --exact-match 2>/dev/null || git rev-parse --short HEAD)
+git archive --format=zip --prefix=failgrade/ "$ref" -o "quizaccess_failgrade-${ref}.zip"
 ```
 
-Replace `v1.3.1` with the tag (or branch/commit) being released. `--prefix=failgrade/` wraps the
-contents in a single top-level folder named after the plugin's install path
-(`mod/quiz/accessrule/failgrade`), matching what moodle.org expects. `tests/` is intentionally
+Run this after checking out (or tagging) the exact commit to release. It picks up the tag pointing
+at the current commit automatically (falling back to the short commit hash if there isn't one yet)
+and uses it both as the archive ref and in the output filename, so there's nothing to edit by hand.
+`--prefix=failgrade/` wraps the contents in a single top-level folder named after the plugin's
+install path (`mod/quiz/accessrule/failgrade`), matching what moodle.org expects. `tests/` is intentionally
 still included - useful for anyone installing from the zip who wants to run the suite locally.
 
 ## License

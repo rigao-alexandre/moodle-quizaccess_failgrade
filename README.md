@@ -104,6 +104,22 @@ To help diagnose the issue, please include:
 Reports without this context are usually much harder to act on, so including it up front saves a
 round trip.
 
+### Packaging a release for moodle.org
+
+The Moodle plugins directory takes a zip upload rather than linking directly to this repo, so a
+release needs to be packaged first. `.gitattributes` marks the files that don't belong in that zip
+(CI config, this README's own dev-only docs) via `export-ignore`, so `git archive` produces a clean
+package on its own - no manual exclude flags to keep in sync:
+
+```bash
+git archive --format=zip --prefix=failgrade/ v1.3.1 -o quizaccess_failgrade-v1.3.1.zip
+```
+
+Replace `v1.3.1` with the tag (or branch/commit) being released. `--prefix=failgrade/` wraps the
+contents in a single top-level folder named after the plugin's install path
+(`mod/quiz/accessrule/failgrade`), matching what moodle.org expects. `tests/` is intentionally
+still included - useful for anyone installing from the zip who wants to run the suite locally.
+
 ## License
 
 Licensed under the [GNU GPL License](http://www.gnu.org/copyleft/gpl.html)

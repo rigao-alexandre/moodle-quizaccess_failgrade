@@ -79,77 +79,69 @@ being complete on a fresh install - that's just cron not having run yet, unrelat
 bin/moodle-docker-compose exec webserver php admin/cli/cron.php
 ```
 
-## Create a non-admin test user
+## Set up a test scenario (student + course + quiz + questions)
 
 **Testing as `admin` is not enough** - admins normally use "Preview quiz", which skips every access
-rule (including this plugin's), so you'd never see the actual blocking behaviour. Create a real
-Student-role user instead.
+rule (including this plugin's), so you'd never see the actual blocking behaviour.
 
-Easiest via the UI: Site administration → Users → Add a new user, then enrol them in your test
-course with the Student role.
+This single script creates everything needed in one go: a Student-role user (reused if it already
+exists, so the script is safe to re-run), a course, an enrolment, a quiz with "Block extra attempts
+if passing grade" already enabled and "grade to pass" set to 6/10, and two numerical questions
+added to it.
 
-Or via CLI - write this to a temporary file inside `moodle/public/` (e.g.
-`create_test_student.php`), run it, then delete it:
+Write it to `moodle/public/setup_test_scenario.php`, run it, then delete it. If you're on Windows
+and hit garbled `$` variables writing this through several layers of shell quoting
+(`wsl -- bash -lc "..."` wrapping a heredoc), write the file directly via the WSL UNC path from
+Windows instead of through a shell at all:
+`\\wsl.localhost\<distro>\home\<you>\moodle5-docker-test\moodle\public\setup_test_scenario.php`.
 
 ```php
 <?php
 define('CLI_SCRIPT', true);
 require(__DIR__ . '/config.php');
 require_once($CFG->dirroot . '/user/lib.php');
-
-$user = new stdClass();
-$user->username = 'student1';
-$user->password = 'Student1234!';
-$user->firstname = 'Student';
-$user->lastname = 'One';
-$user->email = 'student1@example.com';
-$user->auth = 'manual';
-$user->confirmed = 1;
-$user->mnethostid = $CFG->mnet_localhost_id;
-
-$userid = user_create_user($user, true, true);
-echo "Created user id: $userid\n";
-```
-
-```bash
-bin/moodle-docker-compose exec webserver php public/create_test_student.php
-# then, from the WSL side (not through docker exec):
-rm ~/moodle5-docker-test/moodle/public/create_test_student.php
-```
-
-If you're on Windows and hit garbled `$` variables writing this file through several layers of
-shell quoting (`wsl -- bash -lc "..."` wrapping a heredoc), write the file directly via the WSL
-UNC path from Windows instead of through a shell at all:
-`\\wsl.localhost\<distro>\home\<you>\moodle5-docker-test\moodle\public\create_test_student.php`.
-
-## Create a test course + quiz
-
-Same idea as the student user above: write this to `moodle/public/create_test_course.php`, run
-it, then delete it. It creates a course, enrols `student1` (created above) as a Student, and a
-quiz with "Block extra attempts if passing grade" already enabled and "grade to pass" set to 6/10:
-
-```php
-<?php
-define('CLI_SCRIPT', true);
-require(__DIR__ . '/config.php');
 require_once($CFG->libdir . '/testing/generator/component_generator_base.php');
 require_once($CFG->libdir . '/testing/generator/module_generator.php');
 require_once($CFG->libdir . '/testing/generator/data_generator.php');
 require_once($CFG->libdir . '/gradelib.php');
+require_once($CFG->dirroot . '/question/engine/bank.php');
 require_once($CFG->dirroot . '/mod/quiz/lib.php');
+require_once($CFG->dirroot . '/mod/quiz/locallib.php');
+
+// ---- 1. Student user (reused if it already exists). ----
+$student = $DB->get_record('user', ['username' => 'student1']);
+if (!$student) {
+    $newuser = new stdClass();
+    $newuser->username = 'student1';
+    $newuser->password = 'Student1234!';
+    $newuser->firstname = 'Student';
+    $newuser->lastname = 'One';
+    $newuser->email = 'student1@example.com';
+    $newuser->auth = 'manual';
+    $newuser->confirmed = 1;
+    $newuser->mnethostid = $CFG->mnet_localhost_id;
+    $studentid = user_create_user($newuser, true, true);
+    $student = $DB->get_record('user', ['id' => $studentid], '*', MUST_EXIST);
+    echo "Created user student1 (id {$student->id})\n";
+} else {
+    echo "Reusing existing user student1 (id {$student->id})\n";
+}
 
 $generator = new testing_data_generator();
 
+// ---- 2. Course. ----
+$shortname = 'fgtest-' . time();
 $course = $generator->create_course([
     'fullname' => 'Fail Grade test course',
-    'shortname' => 'fgtest-course',
+    'shortname' => $shortname,
 ]);
-echo "Course id: {$course->id}\n";
+echo "Course id: {$course->id} (shortname {$shortname})\n";
 
-$student = $DB->get_record('user', ['username' => 'student1'], '*', MUST_EXIST);
+// ---- 3. Enrol the student. ----
 $generator->enrol_user($student->id, $course->id, 'student');
-echo "Enrolled student1 (id {$student->id}) in the course\n";
+echo "Enrolled student1 in the course\n";
 
+// ---- 4. Quiz, with the plugin's rule already enabled. ----
 $quizgenerator = $generator->get_plugin_generator('mod_quiz');
 $quiz = $quizgenerator->create_instance([
     'course' => $course->id,
@@ -162,6 +154,7 @@ $quiz = $quizgenerator->create_instance([
 ]);
 echo "Quiz id: {$quiz->id}\n";
 
+// ---- 5. Grade to pass. ----
 $item = grade_item::fetch([
     'courseid' => $course->id,
     'itemtype' => 'mod',
@@ -173,57 +166,19 @@ $item->gradepass = 6;
 $item->update();
 echo "Grade to pass set to 6 (out of 10)\n";
 
-$cm = get_coursemodule_from_instance('quiz', $quiz->id);
-echo "\nDone.\n";
-echo "Course: {$CFG->wwwroot}/course/view.php?id={$course->id}\n";
-echo "Quiz:   {$CFG->wwwroot}/mod/quiz/view.php?id={$cm->id}\n";
-```
-
-The two required `require_once`s for `component_generator_base.php`/`module_generator.php` are not
-autoloaded outside PHPUnit - without them, `get_plugin_generator('mod_quiz')` fails with
-`Class "testing_module_generator" not found`.
-
-### Adding questions
-
-`$generator->get_plugin_generator('core_question')->create_question('numerical', ...)` doesn't
-work outside PHPUnit: it fails with `Class "PHPUnit\Framework\TestCase" not found`, because many
-qtype "test helpers" (e.g. numerical's default question fixture) are themselves defined inside real
-PHPUnit test files, which pull in the actual PHPUnit library to load - not available on a normal
-site install.
-
-The fix is to skip that helper layer and call the same production API the question bank form
-itself uses - `question_bank::get_qtype($qtype)->save_question($question, $form)` - built by hand
-instead of via `test_question_maker`. Write this to `moodle/public/add_test_questions.php`
-(adjust `$quizid` to match the quiz created above), run it, then delete it:
-
-```php
-<?php
-define('CLI_SCRIPT', true);
-require(__DIR__ . '/config.php');
-require_once($CFG->libdir . '/testing/generator/component_generator_base.php');
-require_once($CFG->libdir . '/testing/generator/module_generator.php');
-require_once($CFG->libdir . '/testing/generator/data_generator.php');
-require_once($CFG->dirroot . '/question/engine/bank.php');
-require_once($CFG->dirroot . '/mod/quiz/lib.php');
-require_once($CFG->dirroot . '/mod/quiz/locallib.php');
-
-// Change this to match the quiz created by create_test_course.php.
-$quizid = 2;
-
-$quiz = $DB->get_record('quiz', ['id' => $quizid], '*', MUST_EXIST);
-
-// create_question_category() creates a mod_qbank instance under the hood in recent Moodle
-// versions, which is why module_generator.php is required above too.
-$generator = new testing_data_generator();
+// ---- 6. Questions, via the same production API the question bank form uses - NOT
+//         $generator->get_plugin_generator('core_question')->create_question(), which fails
+//         outside PHPUnit with "Class PHPUnit\Framework\TestCase not found": many qtype "test
+//         helpers" (e.g. numerical's default question fixture) are themselves defined inside
+//         real PHPUnit test files, which a normal site install doesn't have available. ----
 $questiongenerator = $generator->get_plugin_generator('core_question');
 $cat = $questiongenerator->create_question_category();
-echo "Question category id: {$cat->id}\n";
 
-function make_numerical_pi_form(int $categoryid): stdClass {
+function make_numerical_pi_form(int $categoryid, string $name): stdClass {
     $form = new stdClass();
     $form->category = $categoryid; // Plain category id is fine - save_question() only
                                     // explode(',')s it, which is a no-op without a comma.
-    $form->name = 'Pi to two d.p.';
+    $form->name = $name;
     $form->questiontext = ['format' => FORMAT_HTML, 'text' => 'What is pi to two d.p.?'];
     $form->defaultmark = 1;
     $form->generalfeedback = ['format' => FORMAT_HTML, 'text' => '3.14 is the right answer.'];
@@ -261,20 +216,32 @@ for ($i = 1; $i <= 2; $i++) {
     $question->idnumber = null;
     $question->status = \core_question\local\bank\question_version_status::QUESTION_STATUS_READY;
 
-    $form = make_numerical_pi_form($cat->id);
-    $form->name = "Pi to two d.p. ({$i})";
-
+    $form = make_numerical_pi_form($cat->id, "Pi to two d.p. ({$i})");
     $saved = question_bank::get_qtype('numerical')->save_question($question, $form);
     quiz_add_quiz_question($saved->id, $quiz);
-    echo "Added question id {$saved->id} to quiz {$quizid}\n";
 }
+echo "Added 2 numerical questions (correct answer: 3.14)\n";
 
-echo "\nDone. Correct answer for both questions: 3.14\n";
+// ---- Summary. ----
+$cm = get_coursemodule_from_instance('quiz', $quiz->id);
+echo "\nDone.\n";
+echo "Course: {$CFG->wwwroot}/course/view.php?id={$course->id}\n";
+echo "Quiz:   {$CFG->wwwroot}/mod/quiz/view.php?id={$cm->id}\n";
+echo "Log in as student1 / Student1234! to attempt the quiz.\n";
 ```
 
-If you'd rather not bother with any of this, adding 1-2 questions through the UI (Question bank →
-Create a new question → Numerical) takes well under a minute and exercises the real UI anyway,
-which is arguably the point of testing this way instead of via PHPUnit in the first place.
+```bash
+bin/moodle-docker-compose exec webserver php public/setup_test_scenario.php
+# then, from the WSL side (not through docker exec):
+rm ~/moodle5-docker-test/moodle/public/setup_test_scenario.php
+```
+
+Re-running it creates a fresh course/quiz each time (the shortname includes a timestamp) while
+reusing the same `student1` user - handy for testing a scenario again after checking out a
+different branch.
+
+If you'd rather not script the questions, adding 1-2 through the UI (Question bank → Create a new
+question → Numerical) takes well under a minute and exercises the real UI anyway.
 
 ## What to actually test
 

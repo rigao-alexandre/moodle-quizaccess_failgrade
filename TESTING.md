@@ -1,8 +1,19 @@
-# Testing this plugin with moodle-docker
+# Testing this plugin
 
-How to spin up a real, clickable Moodle site to manually test this plugin against a specific
-Moodle version/branch, using [moodle-docker](https://github.com/moodlehq/moodle-docker) (the
-official moodlehq Docker environment - the same one `moodle-plugin-ci` uses under the hood).
+## Automated tests
+
+The PHPUnit suite (`tests/`) runs automatically via `.github/workflows/main.yml` on every push/PR,
+across the full Moodle/PHP matrix. To run it yourself against a specific branch, use
+[moodle-plugin-ci](https://moodlehq.github.io/moodle-plugin-ci/) - see the workflow file for the
+exact commands it runs.
+
+## Manual testing with moodle-docker
+
+Automated tests can't catch everything (there are no Behat feature files for this plugin yet, so
+that CI step passes without actually exercising any real UI - see below). This section covers how
+to spin up a real, clickable Moodle site to manually test this plugin against a specific Moodle
+version/branch, using [moodle-docker](https://github.com/moodlehq/moodle-docker) (the official
+moodlehq Docker environment - the same one `moodle-plugin-ci` uses under the hood).
 
 ## Why WSL2, not a Windows drive
 

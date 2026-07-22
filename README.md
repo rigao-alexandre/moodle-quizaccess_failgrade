@@ -44,14 +44,14 @@ after a reset:
   `local_recompletion`) is being worked on, so a reset can be recognised without needing to delete
   any grade/attempt history. Track progress via the GitHub issues.
 
-## Installation
-
-Please refer to the official documentation: [Installing Plugins](https://docs.moodle.org/en/Installing_plugins)
-
 ## Requirements
 
 - Moodle 3.9 (2020060900) through Moodle 5.2, tested via CI against every stable branch in that
   range (see `.github/workflows/main.yml`).
+
+## Installation
+
+Please refer to the official documentation: [Installing Plugins](https://docs.moodle.org/en/Installing_plugins)
 
 ## Development
 

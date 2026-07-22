@@ -44,15 +44,6 @@ after a reset:
   `local_recompletion`) is being worked on, so a reset can be recognised without needing to delete
   any grade/attempt history. Track progress via the GitHub issues.
 
-## Credits
-
-Originally based on:
-
-- [Reattempt Checker - a quiz access rule](https://github.com/terrycampbell/moodle-quizaccess_reattemptchecker)
-  https://moodle.org/plugins/quizaccess_reattemptchecker
-- [Pass grade quiz access rule](https://github.com/catalyst/moodle-quizaccess_passgrade)
-  https://moodle.org/plugins/quizaccess_passgrade
-
 ## Installation
 
 Please refer to the official documentation: [Installing Plugins](https://docs.moodle.org/en/Installing_plugins)
@@ -61,20 +52,6 @@ Please refer to the official documentation: [Installing Plugins](https://docs.mo
 
 - Moodle 3.9 (2020060900) through Moodle 5.2, tested via CI against every stable branch in that
   range (see `.github/workflows/main.yml`).
-
-## Status / Roadmap
-
-- [x] Publish plugin on GitHub
-
-- [x] Submit to [Moodle Plugins directory](https://moodle.org/plugins/)
-
-- [x] GDPR
-
-- [x] Unit tests
-
-- [ ] Behat tests
-
-- [ ] Translate to other languages
 
 ## Development
 
@@ -122,6 +99,49 @@ and uses it both as the archive ref and in the output filename, so there's nothi
 `--prefix=failgrade/` wraps the contents in a single top-level folder named after the plugin's
 install path (`mod/quiz/accessrule/failgrade`), matching what moodle.org expects. `tests/` is intentionally
 still included - useful for anyone installing from the zip who wants to run the suite locally.
+
+## Status / Roadmap
+
+- [x] Publish plugin on GitHub
+
+- [x] Submit to [Moodle Plugins directory](https://moodle.org/plugins/)
+
+- [x] GDPR
+
+- [x] Unit tests
+
+- [ ] Behat tests
+
+- [x] Translate to other languages - handled via [AMOS](https://lang.moodle.org), Moodle's official
+      translation tool. Since this plugin is published on the Moodle Plugins directory, `lang/en/`
+      strings are imported there automatically for community translation, and approved translations are
+      bundled into the moodle.org download - no translation files are kept in this repo (see
+      "Contributing code or translations" above)
+
+## Changelog
+
+Notable milestones, not an exhaustive version-by-version history (see the
+[GitHub releases](https://github.com/rigao-alexandre/moodle-quizaccess_failgrade/releases) /
+[moodle.org versions](https://moodle.org/plugins/quizaccess_failgrade/versions) for that):
+
+- **2020-07 - v1.0** - Initial release.
+- **2023-09 - v1.1.0** - Added support for "Average" as a grading method. It was disabled from the
+  first release onwards (the settings form hid the option entirely for quizzes graded this way) -
+  there was no logical reason it couldn't work, it just hadn't been tested yet. A dedicated test
+  (`test_grade_average()`) now covers it.
+- **2026-07 - v1.3.1** - Fixed a `class_alias()` collision with other `quizaccess_*` plugins doing
+  the same Moodle 4.2+ compatibility trick with the same generic names (see
+  [Known limitations](#known-limitations) for the kind of thing that keeps coming up in this area);
+  extended official support through Moodle 5.2.
+
+## Credits
+
+Originally based on:
+
+- [Reattempt Checker - a quiz access rule](https://github.com/terrycampbell/moodle-quizaccess_reattemptchecker)
+  https://moodle.org/plugins/quizaccess_reattemptchecker
+- [Pass grade quiz access rule](https://github.com/catalyst/moodle-quizaccess_passgrade)
+  https://moodle.org/plugins/quizaccess_passgrade
 
 ## License
 

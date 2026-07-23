@@ -134,6 +134,8 @@ class rule_test extends advanced_testcase
      */
     private function do_attempt($quizobj, $user, $attemptnumber, array $answers)
     {
+        global $DB;
+
         $quba = \question_engine::make_questions_usage_by_activity('mod_quiz', $quizobj->get_context());
         $quba->set_preferred_behaviour($quizobj->get_quiz()->preferredbehaviour);
         $timenow = time();
@@ -144,7 +146,9 @@ class rule_test extends advanced_testcase
         $attemptobj->process_submitted_actions($timenow, false, $answers);
         $attemptobj->process_finish($timenow, false);
 
-        return $attempt;
+        // process_finish() updates the DB through its own internal copy of the attempt, not
+        // the $attempt object above, so re-fetch to get fields it sets (sumgrades, state, ...).
+        return $DB->get_record('quiz_attempts', ['id' => $attempt->id], '*', MUST_EXIST);
     }
 
     public function test_setting()
@@ -325,8 +329,6 @@ class rule_test extends advanced_testcase
      */
     public function test_prevent_new_attempt_waits_for_pending_manual_grading()
     {
-        global $DB;
-
         $this->resetAfterTest();
 
         [$course, $user] = $this->create_test_course_and_user();
@@ -353,10 +355,6 @@ class rule_test extends advanced_testcase
         quiz_add_quiz_question($essay->id, $quiz);
 
         $attempt = $this->do_attempt($quizobj, $user, 1, [1 => ['answer' => 'My answer.', 'answerformat' => FORMAT_HTML]]);
-        // Re-fetch: do_attempt() finishes the attempt through a separate quiz_attempt object
-        // (see process_finish() there), so the returned stdClass doesn't reflect the resulting
-        // sumgrades on its own.
-        $attempt = $DB->get_record('quiz_attempts', ['id' => $attempt->id], '*', MUST_EXIST);
 
         // Grading is pending (sumgrades is null): neither method can know yet whether the user
         // passed, but a new attempt must still be blocked until grading is resolved.

@@ -145,7 +145,10 @@ class quizaccess_failgrade extends quizaccess_failgrade_access_rule_base
             $grade = $grades[$lastattempt->userid] ?? null;
 
             if (!empty($grade)) {
-                return $grade->is_passed($item);
+                // is_passed() returns null (not a bool) when the grade has no finalgrade yet
+                // (e.g. an essay question still awaiting manual grading) - treat that the same
+                // as "not confirmed as passed" rather than leaking null out of this method.
+                return $grade->is_passed($item) ?? false;
             }
         }
 

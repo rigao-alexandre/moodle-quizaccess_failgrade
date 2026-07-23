@@ -33,3 +33,4 @@ $string['failgradeenabled_help'] = 'Prevent user from attempting the quiz again 
 
 $string['failgradedescription'] = 'Attempts available until reaching passing grade.';
 $string['preventmoreattempts'] = 'You have already passed this quiz, and may not make further attempts.';
+$string['pendingmanualgrading'] = 'Your previous attempt is still awaiting grading. You may not make a further attempt until it has been graded.';

@@ -75,11 +75,29 @@ class quizaccess_failgrade extends quizaccess_failgrade_access_rule_base
      */
     public function prevent_new_attempt($numprevattempts, $lastattempt)
     {
+        if ($numprevattempts > 0 && $this->pending_manual_grading($lastattempt)) {
+            return get_string('pendingmanualgrading', 'quizaccess_failgrade');
+        }
+
         if ($this->is_finished($numprevattempts, $lastattempt)) {
             return get_string('preventmoreattempts', 'quizaccess_failgrade');
         }
 
         return false;
+    }
+
+    /**
+     * Whether the last attempt is still awaiting manual grading (e.g. it includes an essay
+     * question), meaning its final grade - and therefore whether the user passed - isn't known
+     * yet. Deliberately kept separate from is_finished(), which promises the user will *never*
+     * be allowed another attempt: once grading completes, if it turns out they failed, they
+     * should still be able to attempt again.
+     * @param object $lastattempt information about the user's last completed attempt.
+     * @return bool
+     */
+    protected function pending_manual_grading($lastattempt)
+    {
+        return is_null($lastattempt->sumgrades);
     }
 
     /**

@@ -314,4 +314,54 @@ class rule_test extends advanced_testcase
         quizaccess_failgrade::delete_settings($quiz);
         $this->assertEquals(0, $DB->count_records('quizaccess_failgrade', ['quizid' => $quiz->id]));
     }
+
+    /**
+     * A quiz containing a manually-graded question (e.g. essay) leaves sumgrades null on the
+     * attempt until a teacher grades it. Until that happens, the final grade - and therefore
+     * whether the user passed - isn't known, so a new attempt must not be allowed yet. This is
+     * deliberately not folded into is_finished() itself: if the eventual manual grade turns out
+     * to be a fail, the user must still be able to attempt again, which is why
+     * prevent_new_attempt() checks this separately instead of is_finished() returning true here.
+     */
+    public function test_prevent_new_attempt_waits_for_pending_manual_grading()
+    {
+        global $DB;
+
+        $this->resetAfterTest();
+
+        [$course, $user] = $this->create_test_course_and_user();
+        $generator = $this->getDataGenerator();
+
+        $quizgenerator = $generator->get_plugin_generator('mod_quiz');
+        $quiz = $quizgenerator->create_instance([
+            'course' => $course->id,
+            'questionsperpage' => 0,
+            'grade' => 10.0,
+            'sumgrades' => 1,
+            'attempts' => 5,
+            'name' => 'Quiz!',
+            'grademethod' => QUIZ_GRADEHIGHEST,
+            'failgradeenabled' => 1,
+        ]);
+        $quizobj = \quizaccess_failgrade_test_quiz::create($quiz->id, $user->id);
+        $this->set_grade_pass($course, $quiz, 6);
+        $rule = quizaccess_failgrade::make($quizobj, 0, false);
+
+        $questiongenerator = $generator->get_plugin_generator('core_question');
+        $cat = $questiongenerator->create_question_category();
+        $essay = $questiongenerator->create_question('essay', null, ['category' => $cat->id]);
+        quiz_add_quiz_question($essay->id, $quiz);
+
+        $attempt = $this->do_attempt($quizobj, $user, 1, [1 => ['answer' => 'My answer.', 'answerformat' => FORMAT_HTML]]);
+        // Re-fetch: do_attempt() finishes the attempt through a separate quiz_attempt object
+        // (see process_finish() there), so the returned stdClass doesn't reflect the resulting
+        // sumgrades on its own.
+        $attempt = $DB->get_record('quiz_attempts', ['id' => $attempt->id], '*', MUST_EXIST);
+
+        // Grading is pending (sumgrades is null): neither method can know yet whether the user
+        // passed, but a new attempt must still be blocked until grading is resolved.
+        $this->assertNull($attempt->sumgrades);
+        $this->assertFalse($rule->is_finished(1, $attempt));
+        $this->assertNotEmpty($rule->prevent_new_attempt(1, $attempt));
+    }
 }

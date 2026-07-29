@@ -33,12 +33,17 @@ defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
 
-require_once ($CFG->dirroot . '/mod/quiz/accessrule/failgrade/rule.php');
+require_once($CFG->dirroot . '/mod/quiz/accessrule/failgrade/rule.php');
 
 // This work-around is required until Moodle 4.2 is the lowest version we support.
+// Use plugin-specific alias names (not the generic 'quiz' / 'quiz_attempt') so this does not
+// collide with other plugins' test bootstraps doing the same trick in the same PHPUnit run.
 if (class_exists('\mod_quiz\local\access_rule_base')) {
-    // Use aliases at class_loader level to maintain compatibility.
-    \class_alias('\mod_quiz\quiz_attempt', '\quiz_attempt');
+    \class_alias('\mod_quiz\quiz_settings', 'quizaccess_failgrade_test_quiz');
+    \class_alias('\mod_quiz\quiz_attempt', 'quizaccess_failgrade_test_quiz_attempt');
+} else {
+    \class_alias('quiz', 'quizaccess_failgrade_test_quiz');
+    \class_alias('quiz_attempt', 'quizaccess_failgrade_test_quiz_attempt');
 }
 
 /**
@@ -47,15 +52,16 @@ if (class_exists('\mod_quiz\local\access_rule_base')) {
  * @copyright 2020 Alexandre Paes Rigão <rigao.com.br>
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class quizaccess_failgrade_testcase extends advanced_testcase
+class rule_test extends advanced_testcase
 {
-    public function test_setting()
+    /**
+     * Create a course with completion/groups enabled and a user enrolled in it.
+     * @return array [$course, $user]
+     */
+    private function create_test_course_and_user()
     {
         global $CFG;
 
-        $this->resetAfterTest();
-
-        // Setup.
         $CFG->enablecompletion = true;
         $CFG->enableavailability = true;
         $generator = $this->getDataGenerator();
@@ -72,37 +78,88 @@ class quizaccess_failgrade_testcase extends advanced_testcase
         $group = $generator->create_group(['courseid' => $course->id]);
         groups_add_member($group, $user);
 
+        return [$course, $user];
+    }
+
+    /**
+     * Create a quiz with two numerical questions worth 1 mark each.
+     * @return array [$quizobj, $quiz]
+     */
+    private function create_test_quiz($course, $user, $grademethod, $failgradeenabled, $attempts = 5, $quizgrade = 10.0)
+    {
+        $generator = $this->getDataGenerator();
         $quizgenerator = $generator->get_plugin_generator('mod_quiz');
 
-        // Test 1.
         $quiz = $quizgenerator->create_instance([
             'course' => $course->id,
             'questionsperpage' => 0,
-            'grade' => 10.0,
+            'grade' => $quizgrade,
             'sumgrades' => 2,
-            'attempts' => 5,
+            'attempts' => $attempts,
             'name' => 'Quiz!',
-            'grademethod' => QUIZ_GRADEHIGHEST,
-            'failgradeenabled' => 0,
+            'grademethod' => $grademethod,
+            'failgradeenabled' => $failgradeenabled,
         ]);
-        $quizobj = \quiz::create($quiz->id, $user->id);
 
+        $questiongenerator = $generator->get_plugin_generator('core_question');
+        $cat = $questiongenerator->create_question_category();
+        $numq = $questiongenerator->create_question('numerical', null, ['category' => $cat->id]);
+        quiz_add_quiz_question($numq->id, $quiz);
+        $numq = $questiongenerator->create_question('numerical', null, ['category' => $cat->id]);
+        quiz_add_quiz_question($numq->id, $quiz);
+
+        $quizobj = \quizaccess_failgrade_test_quiz::create($quiz->id, $user->id);
+
+        return [$quizobj, $quiz];
+    }
+
+    /**
+     * Set the passing grade on a quiz's gradebook item.
+     */
+    private function set_grade_pass($course, $quiz, $gradepass)
+    {
+        $item = \grade_item::fetch([
+            'courseid' => $course->id,
+            'itemtype' => 'mod',
+            'itemmodule' => 'quiz',
+            'iteminstance' => $quiz->id,
+            'outcomeid' => null,
+        ]);
+        $item->gradepass = $gradepass;
+        $item->update();
+    }
+
+    /**
+     * Simulate a single finished quiz attempt and return the resulting attempt record.
+     */
+    private function do_attempt($quizobj, $user, $attemptnumber, array $answers)
+    {
+        $quba = \question_engine::make_questions_usage_by_activity('mod_quiz', $quizobj->get_context());
+        $quba->set_preferred_behaviour($quizobj->get_quiz()->preferredbehaviour);
+        $timenow = time();
+        $attempt = quiz_create_attempt($quizobj, $attemptnumber, false, $timenow, false, $user->id);
+        quiz_start_new_attempt($quizobj, $quba, $attempt, $attemptnumber, $timenow);
+        quiz_attempt_save_started($quizobj, $quba, $attempt);
+        $attemptobj = \quizaccess_failgrade_test_quiz_attempt::create($attempt->id);
+        $attemptobj->process_submitted_actions($timenow, false, $answers);
+        $attemptobj->process_finish($timenow, false);
+
+        return $attempt;
+    }
+
+    public function test_setting()
+    {
+        $this->resetAfterTest();
+
+        [$course, $user] = $this->create_test_course_and_user();
+
+        // The rule does not apply at all when failgradeenabled is off.
+        [$quizobj] = $this->create_test_quiz($course, $user, QUIZ_GRADEHIGHEST, 0);
         $rule = quizaccess_failgrade::make($quizobj, 0, false);
         $this->assertNull($rule);
 
-        // Test 2.
-        $quiz = $quizgenerator->create_instance([
-            'course' => $course->id,
-            'questionsperpage' => 0,
-            'grade' => 10.0,
-            'sumgrades' => 2,
-            'attempts' => 5,
-            'name' => 'Quiz!',
-            'grademethod' => QUIZ_GRADEHIGHEST,
-            'failgradeenabled' => 1,
-        ]);
-        $quizobj = \quiz::create($quiz->id, $user->id);
-
+        // With failgradeenabled on, a quiz with no previous attempts never blocks.
+        [$quizobj] = $this->create_test_quiz($course, $user, QUIZ_GRADEHIGHEST, 1);
         $rule = quizaccess_failgrade::make($quizobj, 0, false);
         $this->assertInstanceOf('quizaccess_failgrade', $rule);
         $this->assertFalse($rule->is_finished(0, null));
@@ -111,397 +168,150 @@ class quizaccess_failgrade_testcase extends advanced_testcase
 
     public function test_grade_highest()
     {
-        global $CFG;
-
         $this->resetAfterTest();
 
-        // Setup.
-        $CFG->enablecompletion = true;
-        $CFG->enableavailability = true;
-        $generator = $this->getDataGenerator();
-
-        $course = $generator->create_course(
-            ['numsections' => 1, 'enablecompletion' => 1],
-            ['createsections' => true]
-        );
-
-        $user = $generator->create_user();
-        $generator->enrol_user($user->id, $course->id);
-        $this->setUser($user);
-
-        $group = $generator->create_group(['courseid' => $course->id]);
-        groups_add_member($group, $user);
-
-        $quizgenerator = $generator->get_plugin_generator('mod_quiz');
-
-        $quiz = $quizgenerator->create_instance([
-            'course' => $course->id,
-            'questionsperpage' => 0,
-            'grade' => 10.0,
-            'sumgrades' => 2,
-            'attempts' => 5,
-            'name' => 'Quiz!',
-            'grademethod' => QUIZ_GRADEHIGHEST,
-            'failgradeenabled' => 1,
-        ]);
-        $quizobj = \quiz::create($quiz->id, $user->id);
-
+        [$course, $user] = $this->create_test_course_and_user();
+        [$quizobj, $quiz] = $this->create_test_quiz($course, $user, QUIZ_GRADEHIGHEST, 1);
+        $this->set_grade_pass($course, $quiz, 6);
         $rule = quizaccess_failgrade::make($quizobj, 0, false);
 
-        $item = \grade_item::fetch([
-            'courseid' => $course->id,
-            'itemtype' => 'mod',
-            'itemmodule' => 'quiz',
-            'iteminstance' => $quiz->id,
-            'outcomeid' => null
-        ]);
-        $item->gradepass = 6;
-        $item->update();
-
-        $questiongenerator = $generator->get_plugin_generator('core_question');
-        $cat = $questiongenerator->create_question_category();
-        $numq = $questiongenerator->create_question('numerical', null, ['category' => $cat->id]);
-        quiz_add_quiz_question($numq->id, $quiz);
-        $numq = $questiongenerator->create_question('numerical', null, ['category' => $cat->id]);
-        quiz_add_quiz_question($numq->id, $quiz);
-
-        // Fail
-        $quba = \question_engine::make_questions_usage_by_activity('mod_quiz', $quizobj->get_context());
-        $quba->set_preferred_behaviour($quizobj->get_quiz()->preferredbehaviour);
-        $timenow = time();
-        $attempt = quiz_create_attempt($quizobj, 1, false, $timenow, false, $user->id);
-        quiz_start_new_attempt($quizobj, $quba, $attempt, 1, $timenow);
-        quiz_attempt_save_started($quizobj, $quba, $attempt);
-        $attemptobj = \quiz_attempt::create($attempt->id);
-        $attemptobj->process_submitted_actions($timenow, false, [1 => ['answer' => '3.14']]);
-        $attemptobj->process_finish($timenow, false);
-
+        // Fail.
+        $attempt = $this->do_attempt($quizobj, $user, 1, [1 => ['answer' => '3.14']]);
         $this->assertFalse($rule->is_finished(1, $attempt));
         $this->assertEmpty($rule->prevent_new_attempt(1, $attempt));
 
-        // Pass
-        $quba = \question_engine::make_questions_usage_by_activity('mod_quiz', $quizobj->get_context());
-        $quba->set_preferred_behaviour($quizobj->get_quiz()->preferredbehaviour);
-        $timenow = time();
-        $attempt = quiz_create_attempt($quizobj, 2, false, $timenow, false, $user->id);
-        quiz_start_new_attempt($quizobj, $quba, $attempt, 2, $timenow);
-        quiz_attempt_save_started($quizobj, $quba, $attempt);
-        $attemptobj = \quiz_attempt::create($attempt->id);
-        $attemptobj->process_submitted_actions($timenow, false, [1 => ['answer' => '3.14'], 2 => ['answer' => '3.14']]);
-        $attemptobj->process_finish($timenow, false);
-
+        // Pass.
+        $attempt = $this->do_attempt($quizobj, $user, 2, [1 => ['answer' => '3.14'], 2 => ['answer' => '3.14']]);
         $this->assertTrue($rule->is_finished(2, $attempt));
         $this->assertNotEmpty($rule->prevent_new_attempt(2, $attempt));
 
-        // Fail
-        $quba = \question_engine::make_questions_usage_by_activity('mod_quiz', $quizobj->get_context());
-        $quba->set_preferred_behaviour($quizobj->get_quiz()->preferredbehaviour);
-        $timenow = time();
-        $attempt = quiz_create_attempt($quizobj, 3, false, $timenow, false, $user->id);
-        quiz_start_new_attempt($quizobj, $quba, $attempt, 3, $timenow);
-        quiz_attempt_save_started($quizobj, $quba, $attempt);
-        $attemptobj = \quiz_attempt::create($attempt->id);
-        $attemptobj->process_submitted_actions($timenow, false, [1 => ['answer' => '3.14']]);
-        $attemptobj->process_finish($timenow, false);
-
+        // Fail again: with "highest grade" the earlier pass still counts.
+        $attempt = $this->do_attempt($quizobj, $user, 3, [1 => ['answer' => '3.14']]);
         $this->assertTrue($rule->is_finished(3, $attempt));
         $this->assertNotEmpty($rule->prevent_new_attempt(3, $attempt));
     }
 
     public function test_grade_firstattempt()
     {
-        global $CFG;
-
         $this->resetAfterTest();
 
-        // Setup.
-        $CFG->enablecompletion = true;
-        $CFG->enableavailability = true;
-        $generator = $this->getDataGenerator();
+        [$course, $user] = $this->create_test_course_and_user();
 
-        $course = $generator->create_course(
-            ['numsections' => 1, 'enablecompletion' => 1],
-            ['createsections' => true]
-        );
-
-        $user = $generator->create_user();
-        $generator->enrol_user($user->id, $course->id);
-        $this->setUser($user);
-
-        $group = $generator->create_group(['courseid' => $course->id]);
-        groups_add_member($group, $user);
-
-        $quizgenerator = $generator->get_plugin_generator('mod_quiz');
-
-        // Fail.
-        $quiz = $quizgenerator->create_instance([
-            'course' => $course->id,
-            'questionsperpage' => 0,
-            'grade' => 10.0,
-            'sumgrades' => 2,
-            'attempts' => 5,
-            'name' => 'Quiz!',
-            'grademethod' => QUIZ_ATTEMPTFIRST,
-            'failgradeenabled' => 1,
-        ]);
-        $quizobj = \quiz::create($quiz->id, $user->id);
-
+        // First attempt fails: the grade stays "fail" for good, even if a later attempt passes.
+        [$quizobj, $quiz] = $this->create_test_quiz($course, $user, QUIZ_ATTEMPTFIRST, 1);
+        $this->set_grade_pass($course, $quiz, 6);
         $rule = quizaccess_failgrade::make($quizobj, 0, false);
 
-        $item = \grade_item::fetch([
-            'courseid' => $course->id,
-            'itemtype' => 'mod',
-            'itemmodule' => 'quiz',
-            'iteminstance' => $quiz->id,
-            'outcomeid' => null
-        ]);
-        $item->gradepass = 6;
-        $item->update();
-
-        $questiongenerator = $generator->get_plugin_generator('core_question');
-        $cat = $questiongenerator->create_question_category();
-        $numq = $questiongenerator->create_question('numerical', null, ['category' => $cat->id]);
-        quiz_add_quiz_question($numq->id, $quiz);
-        $numq = $questiongenerator->create_question('numerical', null, ['category' => $cat->id]);
-        quiz_add_quiz_question($numq->id, $quiz);
-
-        $quba = \question_engine::make_questions_usage_by_activity('mod_quiz', $quizobj->get_context());
-        $quba->set_preferred_behaviour($quizobj->get_quiz()->preferredbehaviour);
-        $timenow = time();
-        $attempt = quiz_create_attempt($quizobj, 1, false, $timenow, false, $user->id);
-        quiz_start_new_attempt($quizobj, $quba, $attempt, 1, $timenow);
-        quiz_attempt_save_started($quizobj, $quba, $attempt);
-        $attemptobj = \quiz_attempt::create($attempt->id);
-        $attemptobj->process_submitted_actions($timenow, false, [1 => ['answer' => '3.14']]);
-        $attemptobj->process_finish($timenow, false);
-
+        $attempt = $this->do_attempt($quizobj, $user, 1, [1 => ['answer' => '3.14']]);
         $this->assertFalse($rule->is_finished(1, $attempt));
         $this->assertEmpty($rule->prevent_new_attempt(1, $attempt));
 
-        $quba = \question_engine::make_questions_usage_by_activity('mod_quiz', $quizobj->get_context());
-        $quba->set_preferred_behaviour($quizobj->get_quiz()->preferredbehaviour);
-        $timenow = time();
-        $attempt = quiz_create_attempt($quizobj, 2, false, $timenow, false, $user->id);
-        quiz_start_new_attempt($quizobj, $quba, $attempt, 2, $timenow);
-        quiz_attempt_save_started($quizobj, $quba, $attempt);
-        $attemptobj = \quiz_attempt::create($attempt->id);
-        $attemptobj->process_submitted_actions($timenow, false, [1 => ['answer' => '3.14'], 2 => ['answer' => '3.14']]);
-        $attemptobj->process_finish($timenow, false);
-
+        $attempt = $this->do_attempt($quizobj, $user, 2, [1 => ['answer' => '3.14'], 2 => ['answer' => '3.14']]);
         $this->assertFalse($rule->is_finished(2, $attempt));
         $this->assertEmpty($rule->prevent_new_attempt(2, $attempt));
 
-        // Pass.
-        $quiz = $quizgenerator->create_instance([
-            'course' => $course->id,
-            'questionsperpage' => 0,
-            'grade' => 10.0,
-            'sumgrades' => 2,
-            'attempts' => 5,
-            'name' => 'Quiz!',
-            'grademethod' => QUIZ_ATTEMPTFIRST,
-            'failgradeenabled' => 1,
-        ]);
-        $quizobj = \quiz::create($quiz->id, $user->id);
-
+        // First attempt passes: the quiz is finished straight away.
+        [$quizobj, $quiz] = $this->create_test_quiz($course, $user, QUIZ_ATTEMPTFIRST, 1);
+        $this->set_grade_pass($course, $quiz, 6);
         $rule = quizaccess_failgrade::make($quizobj, 0, false);
 
-        $item = \grade_item::fetch([
-            'courseid' => $course->id,
-            'itemtype' => 'mod',
-            'itemmodule' => 'quiz',
-            'iteminstance' => $quiz->id,
-            'outcomeid' => null
-        ]);
-        $item->gradepass = 6;
-        $item->update();
-
-        $questiongenerator = $generator->get_plugin_generator('core_question');
-        $cat = $questiongenerator->create_question_category();
-        $numq = $questiongenerator->create_question('numerical', null, ['category' => $cat->id]);
-        quiz_add_quiz_question($numq->id, $quiz);
-        $numq = $questiongenerator->create_question('numerical', null, ['category' => $cat->id]);
-        quiz_add_quiz_question($numq->id, $quiz);
-
-        $quba = \question_engine::make_questions_usage_by_activity('mod_quiz', $quizobj->get_context());
-        $quba->set_preferred_behaviour($quizobj->get_quiz()->preferredbehaviour);
-        $timenow = time();
-        $attempt = quiz_create_attempt($quizobj, 1, false, $timenow, false, $user->id);
-        quiz_start_new_attempt($quizobj, $quba, $attempt, 1, $timenow);
-        quiz_attempt_save_started($quizobj, $quba, $attempt);
-        $attemptobj = \quiz_attempt::create($attempt->id);
-        $attemptobj->process_submitted_actions($timenow, false, [1 => ['answer' => '3.14'], 2 => ['answer' => '3.14']]);
-        $attemptobj->process_finish($timenow, false);
-
+        $attempt = $this->do_attempt($quizobj, $user, 1, [1 => ['answer' => '3.14'], 2 => ['answer' => '3.14']]);
         $this->assertTrue($rule->is_finished(1, $attempt));
         $this->assertNotEmpty($rule->prevent_new_attempt(1, $attempt));
     }
 
     public function test_grade_lastattempt()
     {
-        global $CFG;
-
         $this->resetAfterTest();
 
-        // Setup.
-        $CFG->enablecompletion = true;
-        $CFG->enableavailability = true;
-        $generator = $this->getDataGenerator();
-
-        $course = $generator->create_course(
-            ['numsections' => 1, 'enablecompletion' => 1],
-            ['createsections' => true]
-        );
-
-        $user = $generator->create_user();
-        $generator->enrol_user($user->id, $course->id);
-        $this->setUser($user);
-
-        $group = $generator->create_group(['courseid' => $course->id]);
-        groups_add_member($group, $user);
-
-        $quizgenerator = $generator->get_plugin_generator('mod_quiz');
-
-        // Fail then Pass.
-
-        $quiz = $quizgenerator->create_instance([
-            'course' => $course->id,
-            'questionsperpage' => 0,
-            'grade' => 10.0,
-            'sumgrades' => 2,
-            'attempts' => 5,
-            'name' => 'Quiz!',
-            'grademethod' => QUIZ_ATTEMPTLAST,
-            'failgradeenabled' => 1,
-        ]);
-        $quizobj = \quiz::create($quiz->id, $user->id);
-
+        [$course, $user] = $this->create_test_course_and_user();
+        [$quizobj, $quiz] = $this->create_test_quiz($course, $user, QUIZ_ATTEMPTLAST, 1);
+        $this->set_grade_pass($course, $quiz, 6);
         $rule = quizaccess_failgrade::make($quizobj, 0, false);
 
-        $item = \grade_item::fetch([
-            'courseid' => $course->id,
-            'itemtype' => 'mod',
-            'itemmodule' => 'quiz',
-            'iteminstance' => $quiz->id,
-            'outcomeid' => null
-        ]);
-        $item->gradepass = 6;
-        $item->update();
-
-        $questiongenerator = $generator->get_plugin_generator('core_question');
-        $cat = $questiongenerator->create_question_category();
-        $numq = $questiongenerator->create_question('numerical', null, ['category' => $cat->id]);
-        quiz_add_quiz_question($numq->id, $quiz);
-        $numq = $questiongenerator->create_question('numerical', null, ['category' => $cat->id]);
-        quiz_add_quiz_question($numq->id, $quiz);
-
-        $quba = \question_engine::make_questions_usage_by_activity('mod_quiz', $quizobj->get_context());
-        $quba->set_preferred_behaviour($quizobj->get_quiz()->preferredbehaviour);
-        $timenow = time();
-        $attempt = quiz_create_attempt($quizobj, 1, false, $timenow, false, $user->id);
-        quiz_start_new_attempt($quizobj, $quba, $attempt, 1, $timenow);
-        quiz_attempt_save_started($quizobj, $quba, $attempt);
-        $attemptobj = \quiz_attempt::create($attempt->id);
-        $attemptobj->process_submitted_actions($timenow, false, [1 => ['answer' => '3.14']]);
-        $attemptobj->process_finish($timenow, false);
-
+        // Fail.
+        $attempt = $this->do_attempt($quizobj, $user, 1, [1 => ['answer' => '3.14']]);
         $this->assertFalse($rule->is_finished(1, $attempt));
         $this->assertEmpty($rule->prevent_new_attempt(1, $attempt));
 
-        $quba = \question_engine::make_questions_usage_by_activity('mod_quiz', $quizobj->get_context());
-        $quba->set_preferred_behaviour($quizobj->get_quiz()->preferredbehaviour);
-        $timenow = time();
-        $attempt = quiz_create_attempt($quizobj, 2, false, $timenow, false, $user->id);
-        quiz_start_new_attempt($quizobj, $quba, $attempt, 2, $timenow);
-        quiz_attempt_save_started($quizobj, $quba, $attempt);
-        $attemptobj = \quiz_attempt::create($attempt->id);
-        $attemptobj->process_submitted_actions($timenow, false, [1 => ['answer' => '3.14'], 2 => ['answer' => '3.14']]);
-        $attemptobj->process_finish($timenow, false);
-
+        // Then pass: with "last attempt" only the most recent one counts.
+        $attempt = $this->do_attempt($quizobj, $user, 2, [1 => ['answer' => '3.14'], 2 => ['answer' => '3.14']]);
         $this->assertTrue($rule->is_finished(2, $attempt));
         $this->assertNotEmpty($rule->prevent_new_attempt(2, $attempt));
     }
 
     public function test_grade_average()
     {
-        global $CFG;
-
         $this->resetAfterTest();
 
-        // Setup.
-        $CFG->enablecompletion = true;
-        $CFG->enableavailability = true;
-        $generator = $this->getDataGenerator();
-
-        $course = $generator->create_course(
-            ['numsections' => 1, 'enablecompletion' => 1],
-            ['createsections' => true]
-        );
-
-        $user = $generator->create_user();
-        $generator->enrol_user($user->id, $course->id);
-        $this->setUser($user);
-
-        $group = $generator->create_group(['courseid' => $course->id]);
-        groups_add_member($group, $user);
-
-        $quizgenerator = $generator->get_plugin_generator('mod_quiz');
-
-        $quiz = $quizgenerator->create_instance([
-            'course' => $course->id,
-            'questionsperpage' => 0,
-            'grade' => 10.0,
-            'sumgrades' => 2,
-            'attempts' => 0,
-            'name' => 'Quiz!',
-            'grademethod' => QUIZ_GRADEAVERAGE,
-            'failgradeenabled' => 1,
-        ]);
-        $quizobj = \quiz::create($quiz->id, $user->id);
-
+        [$course, $user] = $this->create_test_course_and_user();
+        [$quizobj, $quiz] = $this->create_test_quiz($course, $user, QUIZ_GRADEAVERAGE, 1, 0);
+        $this->set_grade_pass($course, $quiz, 6);
         $rule = quizaccess_failgrade::make($quizobj, 0, false);
 
-        $item = \grade_item::fetch([
-            'courseid' => $course->id,
-            'itemtype' => 'mod',
-            'itemmodule' => 'quiz',
-            'iteminstance' => $quiz->id,
-            'outcomeid' => null
-        ]);
-        $item->gradepass = 6;
-        $item->update();
-
-        $questiongenerator = $generator->get_plugin_generator('core_question');
-        $cat = $questiongenerator->create_question_category();
-        $numq = $questiongenerator->create_question('numerical', null, ['category' => $cat->id]);
-        quiz_add_quiz_question($numq->id, $quiz);
-        $numq = $questiongenerator->create_question('numerical', null, ['category' => $cat->id]);
-        quiz_add_quiz_question($numq->id, $quiz);
-
-        $quba = \question_engine::make_questions_usage_by_activity('mod_quiz', $quizobj->get_context());
-        $quba->set_preferred_behaviour($quizobj->get_quiz()->preferredbehaviour);
-        $timenow = time();
-        $attempt = quiz_create_attempt($quizobj, 1, false, $timenow, false, $user->id);
-        quiz_start_new_attempt($quizobj, $quba, $attempt, 1, $timenow);
-        quiz_attempt_save_started($quizobj, $quba, $attempt);
-        $attemptobj = \quiz_attempt::create($attempt->id);
-        $attemptobj->process_submitted_actions($timenow, false, [1 => ['answer' => '3.14']]);
-        $attemptobj->process_finish($timenow, false);
-
+        // Fail.
+        $attempt = $this->do_attempt($quizobj, $user, 1, [1 => ['answer' => '3.14']]);
         $this->assertFalse($rule->is_finished(1, $attempt));
         $this->assertEmpty($rule->prevent_new_attempt(1, $attempt));
 
-        $quba = \question_engine::make_questions_usage_by_activity('mod_quiz', $quizobj->get_context());
-        $quba->set_preferred_behaviour($quizobj->get_quiz()->preferredbehaviour);
-        $timenow = time();
-        $attempt = quiz_create_attempt($quizobj, 2, false, $timenow, false, $user->id);
-        quiz_start_new_attempt($quizobj, $quba, $attempt, 2, $timenow);
-        quiz_attempt_save_started($quizobj, $quba, $attempt);
-        $attemptobj = \quiz_attempt::create($attempt->id);
-        $attemptobj->process_submitted_actions($timenow, false, [1 => ['answer' => '3.14'], 2 => ['answer' => '3.14']]);
-        $attemptobj->process_finish($timenow, false);
-
+        // Pass: averaging in a full-marks attempt clears the pass grade.
+        $attempt = $this->do_attempt($quizobj, $user, 2, [1 => ['answer' => '3.14'], 2 => ['answer' => '3.14']]);
         $this->assertTrue($rule->is_finished(2, $attempt));
         $this->assertNotEmpty($rule->prevent_new_attempt(2, $attempt));
+    }
+
+    /**
+     * A quiz with grading disabled ("grade" = 0) never gets a row in the gradebook's
+     * grade_grades table (see quiz_update_grades() in mod/quiz/lib.php, which skips
+     * pushing any grade value when $quiz->grade == 0). The grade_item itself still
+     * exists though, so is_finished() must treat a missing per-user grade the same as
+     * "not graded yet" instead of blocking - or worse, warning on the missing array key.
+     */
+    public function test_no_grade_item()
+    {
+        $this->resetAfterTest();
+
+        [$course, $user] = $this->create_test_course_and_user();
+        [$quizobj] = $this->create_test_quiz($course, $user, QUIZ_GRADEHIGHEST, 1, 5, 0.0);
+        $rule = quizaccess_failgrade::make($quizobj, 0, false);
+
+        $attempt = $this->do_attempt($quizobj, $user, 1, [1 => ['answer' => '3.14'], 2 => ['answer' => '3.14']]);
+
+        $this->assertFalse($rule->is_finished(1, $attempt));
+        $this->assertEmpty($rule->prevent_new_attempt(1, $attempt));
+    }
+
+    /**
+     * save_settings()/delete_settings() persist the failgradeenabled flag in the
+     * quizaccess_failgrade table; neither was covered by the grading tests above.
+     */
+    public function test_save_and_delete_settings()
+    {
+        global $DB;
+
+        $this->resetAfterTest();
+
+        [$course, $user] = $this->create_test_course_and_user();
+        [, $quiz] = $this->create_test_quiz($course, $user, QUIZ_GRADEHIGHEST, 1);
+
+        // Enabling the rule inserts exactly one record.
+        $quiz->failgradeenabled = 1;
+        quizaccess_failgrade::save_settings($quiz);
+        $this->assertEquals(1, $DB->count_records('quizaccess_failgrade', ['quizid' => $quiz->id]));
+
+        // Saving again while already enabled must not insert a duplicate row.
+        quizaccess_failgrade::save_settings($quiz);
+        $this->assertEquals(1, $DB->count_records('quizaccess_failgrade', ['quizid' => $quiz->id]));
+
+        // Disabling deletes the record.
+        $quiz->failgradeenabled = 0;
+        quizaccess_failgrade::save_settings($quiz);
+        $this->assertEquals(0, $DB->count_records('quizaccess_failgrade', ['quizid' => $quiz->id]));
+
+        // delete_settings() removes any existing record regardless of the flag's value.
+        $quiz->failgradeenabled = 1;
+        quizaccess_failgrade::save_settings($quiz);
+        quizaccess_failgrade::delete_settings($quiz);
+        $this->assertEquals(0, $DB->count_records('quizaccess_failgrade', ['quizid' => $quiz->id]));
     }
 }

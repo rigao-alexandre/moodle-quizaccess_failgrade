@@ -8,7 +8,9 @@ jobs:
 
     services:
       mariadb:
-        image: mariadb:10.6
+        # Moodle 5.2 raised the minimum to MariaDB 10.11 (see admin/environment.xml);
+        # kept at that floor since it stays compatible with every older branch in the matrix too.
+        image: mariadb:10.11
         env:
           MYSQL_USER: "root"
           MYSQL_ALLOW_EMPTY_PASSWORD: "true"
@@ -20,6 +22,27 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - php: "8.4"
+            moodle-branch: "MOODLE_502_STABLE"
+            database: mariadb
+          - php: "8.3"
+            moodle-branch: "MOODLE_502_STABLE"
+            database: mariadb
+          - php: "8.3"
+            moodle-branch: "MOODLE_501_STABLE"
+            database: mariadb
+          - php: "8.2"
+            moodle-branch: "MOODLE_501_STABLE"
+            database: mariadb
+          - php: "8.2"
+            moodle-branch: "MOODLE_500_STABLE"
+            database: mariadb
+          - php: "8.2"
+            moodle-branch: "MOODLE_405_STABLE"
+            database: mariadb
+          - php: "8.1"
+            moodle-branch: "MOODLE_405_STABLE"
+            database: mariadb
           - php: "8.1"
             moodle-branch: "MOODLE_404_STABLE"
             database: mariadb
@@ -67,7 +90,7 @@ jobs:
 
       - name: Initialise moodle-plugin-ci
         run: |
-          composer create-project -n --no-dev --prefer-dist moodlehq/moodle-plugin-ci ci ^3
+          composer create-project -n --no-dev --prefer-dist moodlehq/moodle-plugin-ci ci ^4
           echo $(cd ci/bin; pwd) >> $GITHUB_PATH
           echo $(cd ci/vendor/bin; pwd) >> $GITHUB_PATH
           sudo locale-gen en_AU.UTF-8
@@ -128,3 +151,18 @@ jobs:
       - name: Behat features
         if: ${{ always() }}
         run: moodle-plugin-ci behat --profile chrome
+
+  # Stable check name to require in branch protection, independent of the matrix above
+  # (which changes as Moodle branches/PHP versions get added or dropped over time).
+  ci-passed:
+    name: CI passed
+    runs-on: ubuntu-latest
+    needs: test
+    if: always()
+    steps:
+      - name: Check matrix result
+        run: |
+          if [ "${{ needs.test.result }}" != "success" ]; then
+            echo "One or more matrix jobs did not succeed."
+            exit 1
+          fi

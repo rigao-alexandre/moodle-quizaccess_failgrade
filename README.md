@@ -81,7 +81,7 @@ To help diagnose the issue, please include:
 
 - **Moodle version** (Site administration → General → Version)
 - **PHP version** and database (MySQL/MariaDB/Postgres) and its version
-- **Plugin version** (see `version.php`'s `release`, e.g. `v1.3.1`, or the exact commit if
+- **Plugin version** (see `version.php`'s `release`, e.g. `vX.Y.Z`, or the exact commit if
   installed from git)
 - **Quiz settings** relevant to the issue: grading method, "grade to pass", number of attempts
   allowed
@@ -139,14 +139,14 @@ Notable milestones, not an exhaustive version-by-version history (see the
   first release onwards (the settings form hid the option entirely for quizzes graded this way) -
   there was no logical reason it couldn't work, it just hadn't been tested yet. A dedicated test
   (`test_grade_average()`) now covers it. An earlier attempt at this had tried computing the average
-  over *all* attempts allowed on the quiz, not just the ones taken so far - a paradox for a rule
+  over _all_ attempts allowed on the quiz, not just the ones taken so far - a paradox for a rule
   meant to stop attempts early, since a passing average could only ever be confirmed once every
   attempt had already been used. That approach was abandoned in favour of averaging the attempts
   made so far (the same thing the quiz's own "Average grade" already shows the user).
-- **2026-07 - v1.3.1** - Fixed a `class_alias()` collision with other `quizaccess_*` plugins doing
-  the same Moodle 4.2+ compatibility trick with the same generic names (see
-  [Known limitations](#known-limitations) for the kind of thing that keeps coming up in this area);
-  extended official support through Moodle 5.2.
+- **2026-07 - v1.4.0** - Extended official support through Moodle 5.2. Also fixed a `class_alias()`
+  collision with other `quizaccess_*` plugins doing the same Moodle 4.2+ compatibility trick with
+  the same generic names (see [Known limitations](#known-limitations) for the kind of thing that
+  keeps coming up in this area).
 
 ## Credits
 

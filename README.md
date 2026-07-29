@@ -52,7 +52,7 @@ recorded in the gradebook - so as long as that grade isn't there yet (or isn't a
 attempt can still be started even though a previous attempt is still awaiting a human grade.
 
 **Status:** a fix that blocks new attempts while a previous one is pending manual grading is in
-progress, but is **not part of this release** - track progress via the GitHub issues.
+progress - track progress via the GitHub issues.
 
 ## Requirements
 

@@ -44,6 +44,16 @@ after a reset:
   `local_recompletion`) is being worked on, so a reset can be recognised without needing to delete
   any grade/attempt history. Track progress via the GitHub issues.
 
+### Starting a new attempt while a previous one is pending manual grading
+
+Quizzes that rely on manually-graded question types (e.g. Essay) can leave an attempt in a "needs
+grading" state for a while after it's submitted. Today, this plugin only looks at the grade already
+recorded in the gradebook - so as long as that grade isn't there yet (or isn't a passing one), a new
+attempt can still be started even though a previous attempt is still awaiting a human grade.
+
+**Status:** a fix that blocks new attempts while a previous one is pending manual grading is in
+progress - track progress via the GitHub issues.
+
 ## Requirements
 
 - Moodle 3.9 (2020060900) through Moodle 5.2, tested via CI against every stable branch in that
@@ -71,7 +81,7 @@ To help diagnose the issue, please include:
 
 - **Moodle version** (Site administration → General → Version)
 - **PHP version** and database (MySQL/MariaDB/Postgres) and its version
-- **Plugin version** (see `version.php`'s `release`, e.g. `v1.3.1`, or the exact commit if
+- **Plugin version** (see `version.php`'s `release`, e.g. `vX.Y.Z`, or the exact commit if
   installed from git)
 - **Quiz settings** relevant to the issue: grading method, "grade to pass", number of attempts
   allowed
@@ -128,11 +138,15 @@ Notable milestones, not an exhaustive version-by-version history (see the
 - **2023-09 - v1.1.0** - Added support for "Average" as a grading method. It was disabled from the
   first release onwards (the settings form hid the option entirely for quizzes graded this way) -
   there was no logical reason it couldn't work, it just hadn't been tested yet. A dedicated test
-  (`test_grade_average()`) now covers it.
-- **2026-07 - v1.3.1** - Fixed a `class_alias()` collision with other `quizaccess_*` plugins doing
-  the same Moodle 4.2+ compatibility trick with the same generic names (see
-  [Known limitations](#known-limitations) for the kind of thing that keeps coming up in this area);
-  extended official support through Moodle 5.2.
+  (`test_grade_average()`) now covers it. An earlier attempt at this had tried computing the average
+  over _all_ attempts allowed on the quiz, not just the ones taken so far - a paradox for a rule
+  meant to stop attempts early, since a passing average could only ever be confirmed once every
+  attempt had already been used. That approach was abandoned in favour of averaging the attempts
+  made so far (the same thing the quiz's own "Average grade" already shows the user).
+- **2026-07 - v1.4.0** - Extended official support through Moodle 5.2. Also fixed a `class_alias()`
+  collision with other `quizaccess_*` plugins doing the same Moodle 4.2+ compatibility trick with
+  the same generic names (see [Known limitations](#known-limitations) for the kind of thing that
+  keeps coming up in this area).
 
 ## Credits
 

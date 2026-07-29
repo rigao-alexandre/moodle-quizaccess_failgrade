@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Contribute code or a translation
+    url: https://github.com/rigao-alexandre/moodle-quizaccess_failgrade#contributing-code-or-translations
+    about: For fixes, features, or translations, please open a pull request instead of attaching a file to an issue.

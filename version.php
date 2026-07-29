@@ -26,7 +26,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 // WIP: new quizaccess_failgrade_reset table for course/user reset detection, not released yet.
-$plugin->version = 2026071900;
+$plugin->version = 2026072901;
 $plugin->requires = 2020060900;
 $plugin->component = 'quizaccess_failgrade';
 $plugin->maturity = MATURITY_STABLE;

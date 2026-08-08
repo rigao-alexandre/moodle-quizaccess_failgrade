@@ -134,7 +134,7 @@ Notable milestones, not an exhaustive version-by-version history (see the
 [GitHub releases](https://github.com/rigao-alexandre/moodle-quizaccess_failgrade/releases) /
 [moodle.org versions](https://moodle.org/plugins/quizaccess_failgrade/versions) for that):
 
-- **2020-07 - v1.0** - Initial release.
+- **2020-07 - v1.0.0** - Initial release.
 - **2023-09 - v1.1.0** - Added support for "Average" as a grading method. It was disabled from the
   first release onwards (the settings form hid the option entirely for quizzes graded this way) -
   there was no logical reason it couldn't work, it just hadn't been tested yet. A dedicated test

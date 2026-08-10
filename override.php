@@ -26,6 +26,9 @@
 
 require_once(__DIR__ . '/../../../../config.php');
 require_once(__DIR__ . '/rule.php');
+// For the QUIZ_GRADEAVERAGE/QUIZ_ATTEMPTLAST constants used below - not guaranteed to already
+// be loaded here, since this page doesn't go through mod_quiz's normal view/report dispatch.
+require_once($CFG->dirroot . '/mod/quiz/lib.php');
 
 $cmid = required_param('cmid', PARAM_INT);
 $action = optional_param('action', '', PARAM_ALPHA);
@@ -67,9 +70,20 @@ if ($action === 'confirm' && $userid) {
     $user = $DB->get_record('user', ['id' => $userid], '*', MUST_EXIST);
     $continue = new moodle_url($pageurl, ['action' => 'override', 'userid' => $userid, 'sesskey' => sesskey()]);
 
+    $message = get_string('confirmoverride', 'quizaccess_failgrade', fullname($user));
+
+    // With these two grading methods, a low score on the new attempt can overwrite the
+    // student's already-passing recorded grade (see ROADMAP.md) - worth a heads-up before
+    // the teacher/admin confirms, since it's easy to assume "one more attempt" is risk-free.
+    if ($quiz->grademethod == QUIZ_ATTEMPTLAST) {
+        $message .= ' ' . get_string('warningoverridelastattempt', 'quizaccess_failgrade', fullname($user));
+    } else if ($quiz->grademethod == QUIZ_GRADEAVERAGE) {
+        $message .= ' ' . get_string('warningoverrideaverage', 'quizaccess_failgrade', fullname($user));
+    }
+
     echo $OUTPUT->header();
     echo $OUTPUT->confirm(
-        get_string('confirmoverride', 'quizaccess_failgrade', fullname($user)),
+        $message,
         new single_button($continue, get_string('grantoneattempt', 'quizaccess_failgrade'), 'post'),
         $pageurl
     );

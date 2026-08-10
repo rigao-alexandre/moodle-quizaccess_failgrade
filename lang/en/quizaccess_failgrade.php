@@ -44,5 +44,7 @@ $string['manageoverrides'] = 'Manage manual overrides';
 $string['lastattempt'] = 'Last attempt';
 $string['grantoneattempt'] = 'Grant one more attempt';
 $string['confirmoverride'] = 'Grant {$a} one more attempt at this quiz, even though they have already reached the passing grade?';
+$string['warningoverridelastattempt'] = 'Careful: this quiz grades by "Last attempt", so if {$a} scores lower on the new attempt, their recorded grade will drop to match it - which could unblock them again.';
+$string['warningoverrideaverage'] = 'Careful: this quiz grades by "Average grade", so a low score on the new attempt will pull {$a}\'s average down, possibly below the passing grade.';
 $string['overridegranted'] = '{$a} can now attempt this quiz again.';
 $string['nooverridesneeded'] = 'No one is currently blocked from attempting this quiz.';

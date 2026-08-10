@@ -142,7 +142,17 @@ class rule_test extends advanced_testcase
         quiz_attempt_save_started($quizobj, $quba, $attempt);
         $attemptobj = \quizaccess_failgrade_test_quiz_attempt::create($attempt->id);
         $attemptobj->process_submitted_actions($timenow, false, $answers);
-        $attemptobj->process_finish($timenow, false);
+
+        // process_finish() is deprecated since Moodle 5.0 (MDL-68806, triggers a debugging()
+        // call that --fail-on-warning treats as a test failure) in favour of calling these two
+        // separately - but those two don't exist yet on the older branches this plugin still
+        // supports, so detect which API is available instead of hard-coding a version number.
+        if (method_exists($attemptobj, 'process_submit')) {
+            $attemptobj->process_submit($timenow, false);
+            $attemptobj->process_grade_submission($timenow);
+        } else {
+            $attemptobj->process_finish($timenow, false);
+        }
 
         return $attempt;
     }
@@ -362,5 +372,68 @@ class rule_test extends advanced_testcase
         $attempt->timefinish = $timereset + 1;
         $this->assertTrue($rule->is_finished(2, $attempt));
         $this->assertNotEmpty($rule->prevent_new_attempt(2, $attempt));
+    }
+
+    /**
+     * get_blocked_users() drives override.php's list of who to show a "grant one more
+     * attempt" button for - it must include users this rule is currently blocking, and
+     * exclude everyone else (no attempts yet, or not yet passed).
+     */
+    public function test_get_blocked_users()
+    {
+        $this->resetAfterTest();
+
+        [$course, $passeduser] = $this->create_test_course_and_user();
+        [$quizobj, $quiz] = $this->create_test_quiz($course, $passeduser, QUIZ_GRADEHIGHEST, 1);
+        $this->set_grade_pass($course, $quiz, 6);
+
+        $generator = $this->getDataGenerator();
+        $faileduser = $generator->create_user();
+        $generator->enrol_user($faileduser->id, $course->id);
+        $untricduser = $generator->create_user();
+        $generator->enrol_user($untricduser->id, $course->id);
+
+        // Passes: should show up as blocked.
+        $passedattempt = $this->do_attempt(
+            $quizobj,
+            $passeduser,
+            1,
+            [1 => ['answer' => '3.14'], 2 => ['answer' => '3.14']]
+        );
+
+        // Fails: has an attempt, but not blocked.
+        $this->do_attempt($quizobj, $faileduser, 1, [1 => ['answer' => '3.14']]);
+
+        // $untricduser never attempts at all, and must not appear either.
+
+        $blocked = quizaccess_failgrade::get_blocked_users($quizobj);
+
+        $this->assertArrayHasKey($passeduser->id, $blocked);
+        $this->assertEquals($passedattempt->id, $blocked[$passeduser->id]->id);
+        $this->assertArrayNotHasKey($faileduser->id, $blocked);
+        $this->assertArrayNotHasKey($untricduser->id, $blocked);
+    }
+
+    /**
+     * A manual override (override.php, via reset_recorder::record()) must unblock a user
+     * the same way an automatic reset does - it writes to the same table that
+     * reset_since() reads from, see classes/reset_recorder.php.
+     */
+    public function test_manual_override_unblocks_user()
+    {
+        $this->resetAfterTest();
+
+        [$course, $user] = $this->create_test_course_and_user();
+        [$quizobj, $quiz] = $this->create_test_quiz($course, $user, QUIZ_GRADEHIGHEST, 1);
+        $this->set_grade_pass($course, $quiz, 6);
+        $rule = quizaccess_failgrade::make($quizobj, 0, false);
+
+        $attempt = $this->do_attempt($quizobj, $user, 1, [1 => ['answer' => '3.14'], 2 => ['answer' => '3.14']]);
+        $this->assertTrue($rule->is_finished(1, $attempt));
+
+        \quizaccess_failgrade\reset_recorder::record($course->id, $user->id);
+
+        $this->assertFalse($rule->is_finished(1, $attempt));
+        $this->assertEmpty($rule->prevent_new_attempt(1, $attempt));
     }
 }

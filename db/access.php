@@ -15,22 +15,22 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version information for the quizaccess_failgrade plugin.
+ * Capabilities for the quizaccess_failgrade plugin.
  *
- * @package quizaccess
- * @subpackage failgrade
+ * @package quizaccess_failgrade
  * @copyright 2020 Alexandre Paes Rigão <rigao.com.br>
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-// WIP: quizaccess_failgrade_reset table (course/user reset detection) + manual override
-// capability/page, neither released yet.
-$plugin->version = 2026080800;
-$plugin->requires = 2020060900;
-$plugin->component = 'quizaccess_failgrade';
-$plugin->maturity = MATURITY_STABLE;
-$plugin->release = 'v1.4.0';
-// Branch range actually verified against Moodle core (API + CI matrix): 3.9 through 5.2.
-$plugin->supported = [39, 502];
+$capabilities = [
+    'quizaccess/failgrade:overrideattempt' => [
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_MODULE,
+        'archetypes' => [
+            'editingteacher' => CAP_ALLOW,
+            'manager' => CAP_ALLOW,
+        ],
+    ],
+];

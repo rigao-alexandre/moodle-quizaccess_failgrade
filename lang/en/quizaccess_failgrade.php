@@ -37,3 +37,12 @@ $string['privacy:metadata:quizaccess_failgrade_reset'] = 'Records course or user
 $string['privacy:metadata:quizaccess_failgrade_reset:courseid'] = 'The course the reset applies to.';
 $string['privacy:metadata:quizaccess_failgrade_reset:userid'] = 'The user the reset applies to, if it was a per-user reset.';
 $string['privacy:metadata:quizaccess_failgrade_reset:timereset'] = 'The time the reset happened.';
+
+$string['failgrade:overrideattempt'] = 'Manually grant a user one more quiz attempt, bypassing this rule';
+
+$string['manageoverrides'] = 'Manage manual overrides';
+$string['lastattempt'] = 'Last attempt';
+$string['grantoneattempt'] = 'Grant one more attempt';
+$string['confirmoverride'] = 'Grant {$a} one more attempt at this quiz, even though they have already reached the passing grade?';
+$string['overridegranted'] = '{$a} can now attempt this quiz again.';
+$string['nooverridesneeded'] = 'No one is currently blocked from attempting this quiz.';

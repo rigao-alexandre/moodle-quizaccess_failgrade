@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Event observers for the quizaccess_failgrade plugin.
+ * Shared helper for recording quizaccess_failgrade_reset rows.
  *
  * @package quizaccess_failgrade
  * @copyright 2020 Alexandre Paes Rigão <rigao.com.br>
@@ -24,30 +24,33 @@
 
 namespace quizaccess_failgrade;
 
+defined('MOODLE_INTERNAL') || die();
+
 /**
- * Records course/user reset events so rule.php can stop treating attempts and grades from
- * before the reset as still relevant.
+ * Records that a reset happened (automatic, via observer.php, or manual, via override.php),
+ * so rule.php::reset_since() can ignore any attempt/grade from before it. Both callers write
+ * to the same table through this one place, so there is a single source of truth for what
+ * counts as a reset.
  *
  * @copyright 2020 Alexandre Paes Rigão <rigao.com.br>
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class observer
+class reset_recorder
 {
     /**
-     * Handle Moodle's own "Reset course" feature. This applies to every user in the course.
-     * @param \core\event\course_reset_ended $event
+     * Record that a reset happened.
+     * @param int $courseid
+     * @param int|null $userid null means the reset applies to every user in the course.
      */
-    public static function course_reset_ended(\core\event\course_reset_ended $event)
+    public static function record($courseid, $userid)
     {
-        reset_recorder::record((int) $event->courseid, null);
-    }
+        global $DB;
 
-    /**
-     * Handle a local_recompletion reset for a single user.
-     * @param \local_recompletion\event\completion_reset $event
-     */
-    public static function recompletion_completion_reset(\local_recompletion\event\completion_reset $event)
-    {
-        reset_recorder::record((int) $event->courseid, (int) $event->relateduserid);
+        $record = new \stdClass();
+        $record->courseid = $courseid;
+        $record->userid = $userid;
+        $record->timereset = time();
+
+        $DB->insert_record('quizaccess_failgrade_reset', $record);
     }
 }

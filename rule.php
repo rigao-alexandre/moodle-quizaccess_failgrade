@@ -174,6 +174,68 @@ class quizaccess_failgrade extends quizaccess_failgrade_access_rule_base
         $mform->addElement('selectyesno', 'failgradeenabled', get_string('failgradeenabled', 'quizaccess_failgrade'));
 
         $mform->addHelpButton('failgradeenabled', 'failgradeenabled', 'quizaccess_failgrade');
+
+        // Only show the "manage overrides" link once the quiz exists (editing an existing
+        // quiz) and the current user is allowed to grant one - there is no cmid yet on the
+        // "add a new quiz" form, and no coursemodule/context to check the capability against.
+        $cm = $quizform->get_coursemodule();
+        if ($cm && has_capability('quizaccess/failgrade:overrideattempt', context_module::instance($cm->id))) {
+            $url = new moodle_url('/mod/quiz/accessrule/failgrade/override.php', ['cmid' => $cm->id]);
+            $mform->addElement(
+                'static',
+                'failgradeoverridelink',
+                '',
+                html_writer::link($url, get_string('manageoverrides', 'quizaccess_failgrade'))
+            );
+        }
+    }
+
+    /**
+     * Find every user with a finished attempt on this quiz that this rule would currently
+     * block from attempting again. Used by override.php to build the list of users a
+     * teacher/admin can grant a manual override to.
+     * @param quizaccess_failgrade_quiz $quizobj
+     * @return array attempt records (from {quiz_attempts}), keyed by userid, for blocked users.
+     */
+    public static function get_blocked_users($quizobj)
+    {
+        global $DB;
+
+        $rule = self::make($quizobj, time(), false);
+        if (!$rule) {
+            return [];
+        }
+
+        // String literals match \mod_quiz\quiz_attempt::FINISHED/ABANDONED/SUBMITTED (and the
+        // pre-4.2 global \quiz_attempt equivalent) - using the literals directly avoids needing
+        // another class_alias just for this.
+        $attempts = $DB->get_records_select(
+            'quiz_attempts',
+            'quiz = :quizid AND preview = 0 AND state IN (:state1, :state2, :state3)',
+            [
+                'quizid' => $quizobj->get_quizid(),
+                'state1' => 'finished',
+                'state2' => 'abandoned',
+                'state3' => 'submitted',
+            ],
+            'userid, attempt ASC'
+        );
+
+        $lastattempts = [];
+        $numprevattempts = [];
+        foreach ($attempts as $attempt) {
+            $numprevattempts[$attempt->userid] = ($numprevattempts[$attempt->userid] ?? 0) + 1;
+            $lastattempts[$attempt->userid] = $attempt;
+        }
+
+        $blocked = [];
+        foreach ($lastattempts as $userid => $lastattempt) {
+            if ($rule->is_finished($numprevattempts[$userid], $lastattempt)) {
+                $blocked[$userid] = $lastattempt;
+            }
+        }
+
+        return $blocked;
     }
 
     /**

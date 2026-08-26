@@ -91,7 +91,21 @@ class quizaccess_failgrade extends quizaccess_failgrade_access_rule_base
      */
     public function description()
     {
-        return get_string('failgradedescription', 'quizaccess_failgrade');
+        $messages = [get_string('failgradedescription', 'quizaccess_failgrade')];
+
+        // description() is shown on the quiz's normal view page to anyone who can
+        // attempt/preview/review it - not just students - so this is a far more visible
+        // place for teachers to notice the override link than the settings form alone
+        // (see add_settings_form_fields() below, which also links to the same page).
+        if (has_capability('quizaccess/failgrade:overrideattempt', $this->quizobj->get_context())) {
+            $url = new moodle_url(
+                '/mod/quiz/accessrule/failgrade/override.php',
+                ['cmid' => $this->quizobj->get_cmid()]
+            );
+            $messages[] = html_writer::link($url, get_string('manageoverrides', 'quizaccess_failgrade'));
+        }
+
+        return $messages;
     }
 
     /**

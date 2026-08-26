@@ -70,7 +70,7 @@ bin/moodle-docker-wait-for-db
 bin/moodle-docker-compose exec webserver php admin/cli/install_database.php \
   --agree-license --fullname="Failgrade test" --shortname="fgtest" \
   --summary="quizaccess_failgrade test site" \
-  --adminpass="Test1234!" --adminemail="admin@example.com"
+  --adminpass="Admin1234!" --adminemail="admin@example.com"
 ```
 
 > **Note:** if you're driving this from a single non-interactive command line (e.g. scripting it),

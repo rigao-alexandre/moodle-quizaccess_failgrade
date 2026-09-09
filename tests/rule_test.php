@@ -282,6 +282,40 @@ class rule_test extends advanced_testcase
     }
 
     /**
+     * prevent_new_attempt() must trigger a quizaccess_failgrade\event\attempt_blocked event
+     * when (and only when) it actually blocks the attempt, so admins have an audit trail in
+     * Reports > Logs of who was blocked and when.
+     */
+    public function test_event_triggered_when_blocked()
+    {
+        $this->resetAfterTest();
+
+        [$course, $user] = $this->create_test_course_and_user();
+        [$quizobj, $quiz] = $this->create_test_quiz($course, $user, QUIZ_GRADEHIGHEST, 1);
+        $this->set_grade_pass($course, $quiz, 6);
+        $rule = quizaccess_failgrade::make($quizobj, 0, false);
+
+        $sink = $this->redirectEvents();
+
+        // Fail: no block, so no event.
+        $attempt = $this->do_attempt($quizobj, $user, 1, [1 => ['answer' => '3.14']]);
+        $rule->prevent_new_attempt(1, $attempt);
+        $this->assertCount(0, $sink->get_events());
+
+        // Pass: blocked, so exactly one event, carrying the blocked user's id and the quiz context.
+        $attempt = $this->do_attempt($quizobj, $user, 2, [1 => ['answer' => '3.14'], 2 => ['answer' => '3.14']]);
+        $rule->prevent_new_attempt(2, $attempt);
+        $events = $sink->get_events();
+        $this->assertCount(1, $events);
+        $event = reset($events);
+        $this->assertInstanceOf(\quizaccess_failgrade\event\attempt_blocked::class, $event);
+        $this->assertEquals($user->id, $event->relateduserid);
+        $this->assertEquals($quizobj->get_context()->id, $event->contextid);
+
+        $sink->close();
+    }
+
+    /**
      * save_settings()/delete_settings() persist the failgradeenabled flag in the
      * quizaccess_failgrade table; neither was covered by the grading tests above.
      */

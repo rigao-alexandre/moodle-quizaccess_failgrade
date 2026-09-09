@@ -76,6 +76,11 @@ class quizaccess_failgrade extends quizaccess_failgrade_access_rule_base
     public function prevent_new_attempt($numprevattempts, $lastattempt)
     {
         if ($this->is_finished($numprevattempts, $lastattempt)) {
+            \quizaccess_failgrade\event\attempt_blocked::create([
+                'context' => $this->quizobj->get_context(),
+                'relateduserid' => $lastattempt->userid,
+            ])->trigger();
+
             return get_string('preventmoreattempts', 'quizaccess_failgrade');
         }
 
